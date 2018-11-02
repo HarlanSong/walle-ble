@@ -130,7 +130,6 @@ public class WalleBleService extends Service {
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED && status != 133) {
                 intentAction = ACTION_GATT_DISCONNECTED;
                 mConnectionState = STATE_DISCONNECTED;
-                BleUtil.bleConnected = false;
                 BleUtil.bleName = null;
                 BleUtil.bleAddress = null;
                 BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_NOT_CONNECTED);
@@ -143,7 +142,6 @@ public class WalleBleService extends Service {
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             LogUtil.d(TAG, "onServicesDiscovered status:" + status);
             if (status == BluetoothGatt.GATT_SUCCESS && isConnected()) {
-                BleUtil.bleConnected = true;
                 BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_SUCCESS);
                 broadcastUpdate(ACTION_CONNECTED_SUCCESS);
             } else {
@@ -214,7 +212,7 @@ public class WalleBleService extends Service {
             BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_FAIL);
             return false;
         }
-        if (BleUtil.bleConnected && address.equals(mBluetoothDeviceAddress)) {
+        if (BleUtil.getConnectStatus(getBaseContext()) == BleUtil.CONNECT_STATUS_SUCCESS && address.equals(mBluetoothDeviceAddress)) {
             return true;
         }
         LogUtil.d(TAG, "Start connect device,macAddress:" + address);
@@ -264,7 +262,7 @@ public class WalleBleService extends Service {
                 if (!artificialDisconnect && !isConnected() && !TextUtils.isEmpty(mBluetoothDeviceAddress) && reconnectionNumber < maxReconnectionNumber) {
                     reconnectionNumber++;
                     connect(mBluetoothDeviceAddress);
-                }else{
+                }else if(BleUtil.getConnectStatus(getBaseContext()) != BleUtil.CONNECT_STATUS_SUCCESS){
                     BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_FAIL);
                 }
             }

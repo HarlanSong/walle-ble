@@ -5,9 +5,6 @@ import android.content.Intent;
 import cn.songhaiqing.walle.ble.service.WalleBleService;
 
 public class BleUtil {
-    @Deprecated
-    public static boolean bleConnected = false;
-
     private static int connectStatus = 0;
     public static final int CONNECT_STATUS_NOT_CONNECTED = 0;
     public static final int CONNECT_STATUS_CONNECTING = 1;

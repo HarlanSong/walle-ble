@@ -110,9 +110,6 @@ BleUtil.broadcastReadBle(Context context, byte[] bytes, String serviceUUID,Strin
 
 getConnectStatus(Context context)
 
-// 是否已经连接（过时）
-BleUtil.bleConnected （过时）
-
 // 已连接设备MAC地址
 BleUtil.bleAddress
 
@@ -144,28 +141,8 @@ WalleBleConfig.setSegmentationSleepTime(int segmentationSleepTime)
 
 ## 更新日志
 
-**1.0.9(20181023)**
-* 添加蓝牙状态连接中的判断 
-* 断开连接后关闭服务节省消耗
-* 修复蓝牙服务被系统结束后的蓝牙状态判断错误问题。
+**1.0.2(20181102)**
+* 修复一些情况下状态判断错误问题。
 
-**1.0.8(20180727)**
-* [添加] 支持分包时在第0位添加序号，从第二个包开始。
-
-**1.0.7(20180726)**
-* [添加] 配置分包等待时间（毫秒）
-* [添加] 配置发送命令失败重试时间（毫秒）
-* [添加] 配置发送命令失败重试次数
-
-**1.0.6(20180925)**
-* 发布蓝牙命令支持不截断发送
-* 删除walle-core的依赖
-
-**1.0.5(20180904)**
-* 修复再次连接蓝牙设备慢后失败问题
-* BleUtil添加已连接设备信息（mac地址、名称）
-
-**1.0.4(20180903)**
-* 删除项目自动生成的无用库，及删除测试模块代码。
-* 引用的核心库升级至1.0.1。
-
+**1.0.1(20181102)**
+* 从jcenter移至jitpack的第一个版本，重新开始版本号。
