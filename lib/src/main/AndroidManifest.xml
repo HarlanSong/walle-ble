@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="cn.songhaiqing.walle.ble">
+
+    <application>
+        <activity
+            android:name=".activity.DeviceScanActivity"
+            android:theme="@android:style/Theme.Holo.Light.NoActionBar" />
+        <service android:name=".service.WalleBleService" />
+    </application>
+</manifest>

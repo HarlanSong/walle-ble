@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">walle-ble</string>
+    <string name="ble_scan">Scan</string>
+    <string name="ble_disconnect">Disconnect</string>
+</resources>
