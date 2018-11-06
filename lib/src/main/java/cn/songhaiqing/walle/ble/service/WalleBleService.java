@@ -128,7 +128,7 @@ public class WalleBleService extends Service {
                 BleUtil.bleName = bleName;
                 BleUtil.bleAddress = bleName;
                 LogUtil.i(TAG, "成功连接设备 ,设备名称:" + bleName + " MAC地址:" + bleAddress);
-                //LogUtil.d(TAG, "Attempting to start service discovery:" + mBluetoothGatt.discoverServices());
+                LogUtil.d(TAG, "Attempting to start service discovery:" + mBluetoothGatt.discoverServices());
                 sendBroadcast(new Intent(intentAction));
                 BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_SUCCESS);
                 LogUtil.i(TAG, "本次连接耗时：" + (System.currentTimeMillis() - connectTimeTag) + " 毫秒");
