@@ -44,7 +44,6 @@ public class WalleBleService extends Service {
 
     public static final String ACTION_DISCONNECT_DEVICE = "cn.songhaiqing.walle.ble.ACTION_DISCONNECT_DEVICE";
 
-    public final static String ACTION_GATT_CONNECTED = "cn.songhaiqing.walle.ble.ACTION_GATT_CONNECTED";
     public final static String ACTION_GATT_DISCONNECTED = "cn.songhaiqing.walle.ble.ACTION_GATT_DISCONNECTED";
     public final static String ACTION_GATT_SERVICES_DISCOVERED = "cn.songhaiqing.walle.ble.ACTION_GATT_SERVICES_DISCOVERED";
     public final static String ACTION_CONNECTED_SUCCESS = "cn.songhaiqing.walle.ble.ACTION_CONNECTED_SUCCESS";
@@ -122,7 +121,7 @@ public class WalleBleService extends Service {
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             String intentAction;
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                intentAction = ACTION_GATT_CONNECTED;
+                intentAction = ACTION_CONNECTED_SUCCESS;
                 mConnectionState = STATE_CONNECTED;
                 String bleName = gatt.getDevice().getName();
                 String bleAddress = gatt.getDevice().getAddress();
@@ -155,9 +154,7 @@ public class WalleBleService extends Service {
         }
 
         @Override
-        public void onCharacteristicRead(BluetoothGatt gatt,
-                                         BluetoothGattCharacteristic characteristic,
-                                         int status) {
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic,int status) {
             LogUtil.d(TAG, "onCharacteristicRead Characteristic UUID : " + characteristic.getUuid().toString());
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 bluetoothUpdate(characteristic);
@@ -165,8 +162,7 @@ public class WalleBleService extends Service {
         }
 
         @Override
-        public void onCharacteristicChanged(BluetoothGatt gatt,
-                                            BluetoothGattCharacteristic characteristic) {
+        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {
             LogUtil.d(TAG, "onCharacteristicChanged Characteristic UUID : " + characteristic.getUuid().toString());
             bluetoothUpdate(characteristic);
         }
