@@ -385,7 +385,7 @@ public class WalleBleService extends Service {
                 bluetoothGattCharacteristicWrite.setValue(writeData);
                 writeCharacteristic(bluetoothGattCharacteristicWrite, 0);
             }
-        }, 500);
+        }, WalleBleConfig.getBleWriteDelayedTime());
     }
 
     protected void writeBluetooth(final String notifyServiceUUID, final String notifyCharacteristicUUID,

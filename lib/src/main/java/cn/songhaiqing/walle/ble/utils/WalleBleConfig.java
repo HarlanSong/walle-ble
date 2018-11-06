@@ -6,6 +6,7 @@ public class WalleBleConfig {
     private static String LOG_TAG = "WalleBle ";
     private static int segmentationSleepTime = 2000;
     private static boolean segmentationAddIndex = false;
+    private static int bleWriteDelayedTime = 1000;
     private static int retrySleepTime = 1000;
     private static int maxRetryNumber = 3;
 
@@ -58,5 +59,16 @@ public class WalleBleConfig {
 
     public static void setSegmentationAddIndex(boolean segmentationAddIndex) {
         WalleBleConfig.segmentationAddIndex = segmentationAddIndex;
+    }
+
+    public static int getBleWriteDelayedTime() {
+        return bleWriteDelayedTime;
+    }
+
+    public static void setBleWriteDelayedTime(int bleWriteDelayedTime) {
+        if(bleWriteDelayedTime <= 300){
+            bleWriteDelayedTime = 300;
+        }
+        WalleBleConfig.bleWriteDelayedTime = bleWriteDelayedTime;
     }
 }
