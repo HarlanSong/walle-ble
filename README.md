@@ -141,6 +141,14 @@ WalleBleConfig.setSegmentationSleepTime(int segmentationSleepTime)
 
 ## 更新日志
 
+**1.0.3**
+* 【修复】设备连接成功立即发送命令并立即结束会闪退问题
+* 【修复】蓝牙“连接中”状态更新不及时问题
+* 【添加】判断服务可用、打开蓝牙功能
+* 【添加】对蓝牙重试和失败状态监听
+* 【改进】BleUtil类`void connectDevice(final Context context, final String address)` 替换原`boolean connectDevice(final Context context, String name, final String address)`方法
+
+
 **1.0.2(20181102)**
 * 修复一些情况下状态判断错误问题。
 
