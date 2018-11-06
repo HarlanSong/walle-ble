@@ -1,5 +1,7 @@
 package cn.songhaiqing.walle.ble.utils;
 
+import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
 import cn.songhaiqing.walle.ble.service.WalleBleService;
@@ -14,7 +16,9 @@ public class BleUtil {
     public static String bleAddress;
     public static String bleName;
 
+    @Deprecated
     public static boolean connectDevice(final Context context, String name, final String address) {
+        setConnectStatus(CONNECT_STATUS_CONNECTING);
         if (!ToolUtil.isServiceRunning(WalleBleService.class.getName(), context)) {
             Intent intent = new Intent(context, WalleBleService.class);
             context.startService(intent);
@@ -40,10 +44,39 @@ public class BleUtil {
         return true;
     }
 
+    /**
+     * 连接设备
+     * @param context
+     * @param address MAC地址
+     */
+    public static void connectDevice(final Context context, final String address) {
+        setConnectStatus(CONNECT_STATUS_CONNECTING);
+        if (!ToolUtil.isServiceRunning(WalleBleService.class.getName(), context)) {
+            Intent intent = new Intent(context, WalleBleService.class);
+            context.startService(intent);
+            new Thread() {
+                @Override
+                public void run() {
+                    super.run();
+                    try {
+                        sleep(100);
+                    } catch (InterruptedException e) {
+                        LogUtil.e("BleUtil", e.getMessage());
+                    }
+                    Intent intent = new Intent(WalleBleService.ACTION_CONNECT_DEVICE);
+                    intent.putExtra(WalleBleService.EXTRA_DATA, address);
+                    context.sendBroadcast(intent);
+                }
+            }.start();
+        } else {
+            Intent intent = new Intent(WalleBleService.ACTION_CONNECT_DEVICE);
+            intent.putExtra(WalleBleService.EXTRA_DATA, address);
+            context.sendBroadcast(intent);
+        }
+    }
+
     public static void disConnect(Context context) {
-        Intent intent = new Intent(WalleBleService.ACTION_DISCONNECT_DEVICE);
-        context.sendBroadcast(intent);
-        intent = new Intent(context, WalleBleService.class);
+        Intent intent = new Intent(context, WalleBleService.class);
         context.stopService(intent);
     }
 
@@ -93,5 +126,37 @@ public class BleUtil {
 
     public static void setConnectStatus(int connectStatus) {
         BleUtil.connectStatus = connectStatus;
+    }
+
+    /**
+     * 判断连接是否可用
+     * @return
+     */
+    public static boolean bleIsEnabled(){
+        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if(bluetoothAdapter == null){
+            return false;
+        }
+        return bluetoothAdapter.isEnabled();
+    }
+
+    /**
+     * 验证或开始蓝牙
+     * @param activity
+     * @param resultCode
+     * @return
+     */
+    public static boolean validOrOpenBle(Activity activity, int resultCode){
+        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if(bluetoothAdapter == null){
+            return false;
+        }
+        if (!bluetoothAdapter.isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            activity.startActivityForResult(enableBtIntent, resultCode);
+            return false;
+        }else{
+            return true;
+        }
     }
 }

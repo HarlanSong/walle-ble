@@ -12,6 +12,7 @@ import android.widget.Toast;
 import cn.songhaiqing.walle.ble.activity.DeviceScanActivity;
 import cn.songhaiqing.walle.ble.service.WalleBleService;
 import cn.songhaiqing.walle.ble.utils.BleUtil;
+import cn.songhaiqing.walle.ble.utils.WalleBleConfig;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private final int REQUEST_BIND_DEVICE = 1;
@@ -34,6 +35,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnScan = findViewById(R.id.btn_scan);
         btnDisconnect.setOnClickListener(this);
         btnScan.setOnClickListener(this);
+
+        WalleBleConfig.setDebug(true);
     }
     private BroadcastReceiver bleReceiver = new BroadcastReceiver() {
         @Override
