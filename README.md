@@ -2,13 +2,18 @@
 # walle-ble
  低功耗蓝牙辅助库
 
-### Gradle 引入库
-
+## 使用
+**repositories中添加源**
 ```groovy
-implementation 'cn.songhaiqing.walle.ble:walle-ble:1.0.8'
+maven { url "https://jitpack.io" }
 ```
 
-### 添加权限
+**Gradle 引入库**
+```groovy
+implementation 'com.github.HarlanSong:walle-ble:1.0.6'
+```
+
+**添加权限**
 ```xml
 <uses-permission android:name="android.permission.BLUETOOTH" />
 <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -16,7 +21,7 @@ implementation 'cn.songhaiqing.walle.ble:walle-ble:1.0.8'
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 ```
 
-## 使用文档
+## 文档
 ### 打开扫描界面
 
  ![img](https://github.com/HarlanSong/Walle/blob/master/images/bleScan.png?raw=true)
