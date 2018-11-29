@@ -9,6 +9,8 @@ public class WalleBleConfig {
     private static int bleWriteDelayedTime = 1000;
     private static int retrySleepTime = 1000;
     private static int maxRetryNumber = 3;
+    private static int scanBleTimeoutTime = 20000;
+
 
     public static void setLogTag(String tag) {
         if (tag == null) {
@@ -66,9 +68,20 @@ public class WalleBleConfig {
     }
 
     public static void setBleWriteDelayedTime(int bleWriteDelayedTime) {
-        if(bleWriteDelayedTime <= 300){
+        if (bleWriteDelayedTime <= 300) {
             bleWriteDelayedTime = 300;
         }
         WalleBleConfig.bleWriteDelayedTime = bleWriteDelayedTime;
+    }
+
+    public static int getScanBleTimeoutTime() {
+        return scanBleTimeoutTime;
+    }
+
+    public static void setScanBleTimeoutTime(int scanBleTimeoutTime) {
+        if (scanBleTimeoutTime < 1000) {
+            return;
+        }
+        WalleBleConfig.scanBleTimeoutTime = scanBleTimeoutTime;
     }
 }

@@ -4,7 +4,7 @@ import java.util.Objects;
 
 public class BluetoothDeviceEntity {
     private String name;
-    private String macAddress;
+    private String address;
     private Integer rssi;
 
     public String getName() {
@@ -15,12 +15,12 @@ public class BluetoothDeviceEntity {
         this.name = name;
     }
 
-    public String getMacAddress() {
-        return macAddress;
+    public String getAddress() {
+        return address;
     }
 
-    public void setMacAddress(String macAddress) {
-        this.macAddress = macAddress;
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public Integer getRssi() {
@@ -36,11 +36,12 @@ public class BluetoothDeviceEntity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         BluetoothDeviceEntity that = (BluetoothDeviceEntity) o;
-        return Objects.equals(macAddress, that.macAddress);
+        return Objects.equals(address, that.address);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(macAddress);
+
+        return Objects.hash(address);
     }
 }

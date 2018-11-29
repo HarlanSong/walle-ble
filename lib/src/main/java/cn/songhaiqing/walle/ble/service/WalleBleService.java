@@ -10,6 +10,9 @@ import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.le.BluetoothLeScanner;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -18,7 +21,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.text.TextUtils;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import cn.songhaiqing.walle.ble.utils.BleUtil;
 import cn.songhaiqing.walle.ble.utils.LogUtil;
@@ -32,6 +37,7 @@ public class WalleBleService extends Service {
     private BluetoothAdapter mBluetoothAdapter;
     private String mBluetoothDeviceAddress;
     private BluetoothGatt mBluetoothGatt;
+    private BluetoothLeScanner bluetoothLeScanner;
     private int mConnectionState = STATE_DISCONNECTED;
 
     private static final int STATE_DISCONNECTED = 0;
@@ -41,9 +47,10 @@ public class WalleBleService extends Service {
     public static final String ACTION_READ_BLE = "cn.songhaiqing.walle.ble.ACTION_READ_BLE";
     public static final String ACTION_WRITE_BLE = "cn.songhaiqing.walle.ble.ACTION_WRITE_BLE";
     public static final String ACTION_CONNECT_DEVICE = "cn.songhaiqing.walle.ble.ACTION_CONNECT_DEVICE";
+    public final static String ACTION_START_SCAN = "cn.songhaiqing.walle.ble.ACTION_START_SCAN"; // 开始扫描设备
+    public final static String ACTION_STOP_SCAN = "cn.songhaiqing.walle.ble.ACTION_STOP_SCAN"; // 结束扫描设备
 
     public static final String ACTION_DISCONNECT_DEVICE = "cn.songhaiqing.walle.ble.ACTION_DISCONNECT_DEVICE";
-
     public final static String ACTION_GATT_DISCONNECTED = "cn.songhaiqing.walle.ble.ACTION_GATT_DISCONNECTED";
     public final static String ACTION_GATT_SERVICES_DISCOVERED = "cn.songhaiqing.walle.ble.ACTION_GATT_SERVICES_DISCOVERED";
     public final static String ACTION_CONNECTED_SUCCESS = "cn.songhaiqing.walle.ble.ACTION_CONNECTED_SUCCESS";
@@ -52,6 +59,8 @@ public class WalleBleService extends Service {
     public final static String ACTION_EXECUTED_SUCCESSFULLY = "cn.songhaiqing.walle.ble.ACTION_EXECUTED_SUCCESSFULLY";
     public final static String ACTION_EXECUTED_FAILED = "cn.songhaiqing.walle.ble.ACTION_EXECUTED_FAILED";
     public final static String ACTION_DEVICE_RESULT = "cn.songhaiqing.walle.ble.ACTION_DEVICE_RESULT";
+    public final static String ACTION_SCAN_RESULT = "cn.songhaiqing.walle.ble.ACTION_SCAN_RESULT"; // 搜索设备新结果
+    public final static String ACTION_SCAN_TIMEOUT = "cn.songhaiqing.walle.ble.ACTION_SCAN_TIMEOUT"; // 搜索设备超时并结束
 
     public final static String EXTRA_DATA = "EXTRA_DATA";
     public final static String EXTRA_DATA_NOTIFY_SERVICE_UUID = "EXTRA_DATA_NOTIFY_SERVICE_UUID";
@@ -63,16 +72,16 @@ public class WalleBleService extends Service {
     public final static String EXTRA_DATA_READ_CHARACTERISTIC_UUID = "EXTRA_DATA_READ_CHARACTERISTIC_UUID";
 
     private BluetoothGattCharacteristic notifyBluetoothGattCharacteristic;
-
     private Handler handler;
 
     private boolean operationDone = true;
     private boolean artificialDisconnect = true;
     private final int maxReconnectionNumber = 3;
     private int reconnectionNumber = 0;
-    final int maxLength = 20;
+    private final int maxLength = 20;
     private long connectTimeTag;
     private Runnable reconnectionRunnable;
+    private Map<String, BluetoothDevice> deviceMap;
 
     @Override
     public void onCreate() {
@@ -84,7 +93,11 @@ public class WalleBleService extends Service {
         intentFilter.addAction(ACTION_WRITE_BLE);
         intentFilter.addAction(ACTION_CONNECT_DEVICE);
         intentFilter.addAction(ACTION_DISCONNECT_DEVICE);
+        intentFilter.addAction(ACTION_START_SCAN);
+        intentFilter.addAction(ACTION_STOP_SCAN);
         registerReceiver(broadcastReceiver, intentFilter);
+
+        deviceMap = new HashMap<>();
         initialize();
     }
 
@@ -112,6 +125,10 @@ public class WalleBleService extends Service {
                 boolean segmentationContent = intent.getBooleanExtra(EXTRA_DATA_WRITE_SEGMENTATION, true);
                 byte[] data = intent.getByteArrayExtra(EXTRA_DATA);
                 writeBluetooth(notifyServiceUUID, notifyCharacteristicUUID, writeServiceUUID, writeCharacteristicUUID, data, segmentationContent);
+            } else if (ACTION_START_SCAN.equals(action)) {
+                startScan();
+            } else if (ACTION_STOP_SCAN.equals(action)) {
+                stopScan();
             }
         }
     };
@@ -154,7 +171,7 @@ public class WalleBleService extends Service {
         }
 
         @Override
-        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic,int status) {
+        public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             LogUtil.d(TAG, "onCharacteristicRead Characteristic UUID : " + characteristic.getUuid().toString());
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 bluetoothUpdate(characteristic);
@@ -178,8 +195,6 @@ public class WalleBleService extends Service {
     }
 
     private boolean initialize() {
-        // For API level 18 and above, get a reference to BluetoothAdapter through
-        // BluetoothManager.
         if (mBluetoothManager == null) {
             mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
             if (mBluetoothManager == null) {
@@ -204,14 +219,11 @@ public class WalleBleService extends Service {
             LogUtil.e(TAG, "无法获得蓝牙适配器");
             return false;
         }
+        bluetoothLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
         return true;
     }
 
     private boolean connect(final String address) {
-        if (!initialize()) {
-            BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_FAIL);
-            return false;
-        }
         LogUtil.d(TAG, "开始连接设备MAC地址:" + address);
         artificialDisconnect = false;
         if (mBluetoothAdapter == null || address == null) {
@@ -221,19 +233,20 @@ public class WalleBleService extends Service {
             }
         }
         if (BleUtil.getConnectStatus(getBaseContext()) == BleUtil.CONNECT_STATUS_SUCCESS && address.equals(mBluetoothDeviceAddress)) {
-            LogUtil.d(TAG,"当前设备已连接，无需要重复连接");
+            LogUtil.d(TAG, "当前设备已连接，无需要重复连接");
             return true;
-        }else if(BleUtil.getConnectStatus(getBaseContext()) == BleUtil.CONNECT_STATUS_SUCCESS && !address.equals(mBluetoothDeviceAddress)){
+        } else if (isConnected() && !address.equals(mBluetoothDeviceAddress)) {
             disconnect();
-            LogUtil.d(TAG,"蓝牙已连接其他设备，正在断开现有连接，并连接新设备。");
+            LogUtil.d(TAG, "蓝牙已连接其他设备，正在断开现有连接，并连接新设备。");
         }
-
-        final BluetoothDevice device = mBluetoothAdapter.getRemoteDevice(address);
+        BluetoothDevice device = deviceMap.get(address);
+        if (device == null) {
+            device = mBluetoothAdapter.getRemoteDevice(address);
+        }
         if (device == null) {
             LogUtil.w(TAG, "Device not found.  Unable to connect.");
             return false;
         }
-
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
         mBluetoothDeviceAddress = address;
         mConnectionState = STATE_CONNECTING;
@@ -250,14 +263,14 @@ public class WalleBleService extends Service {
             public void run() {
                 if (!artificialDisconnect && !isConnected() && !TextUtils.isEmpty(mBluetoothDeviceAddress) && reconnectionNumber < maxReconnectionNumber) {
                     reconnectionNumber++;
-                    LogUtil.i(TAG,"正在重连，重连次数:" + reconnectionNumber);
-                    Intent intent =  new Intent(ACTION_CONNECT_FAIL);
-                    intent.putExtra("reconnectionNumber",reconnectionNumber);
+                    LogUtil.i(TAG, "正在重连，重连次数:" + reconnectionNumber);
+                    Intent intent = new Intent(ACTION_CONNECT_FAIL);
+                    intent.putExtra("reconnectionNumber", reconnectionNumber);
                     sendBroadcast(intent);
                     connect(mBluetoothDeviceAddress);
-                }else if(BleUtil.getConnectStatus(getBaseContext()) != BleUtil.CONNECT_STATUS_SUCCESS){
+                } else if (BleUtil.getConnectStatus(getBaseContext()) != BleUtil.CONNECT_STATUS_SUCCESS) {
                     BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_FAIL);
-                    LogUtil.w(TAG,"连接失败");
+                    LogUtil.w(TAG, "连接失败");
                     sendBroadcast(new Intent(ACTION_CONNECT_FAIL));
                 }
             }
@@ -270,7 +283,7 @@ public class WalleBleService extends Service {
             LogUtil.w(TAG, "BluetoothAdapter not initialized (disconnect)");
             return;
         }
-        if(mBluetoothGatt != null){
+        if (mBluetoothGatt != null) {
             mBluetoothGatt.disconnect();
         }
         artificialDisconnect = true;
@@ -377,7 +390,7 @@ public class WalleBleService extends Service {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if(mBluetoothGatt == null){
+                if (mBluetoothGatt == null) {
                     return;
                 }
                 BluetoothGattCharacteristic bluetoothGattCharacteristicWrite = mBluetoothGatt.getService(UUID.fromString(writeServiceUUID))
@@ -403,7 +416,7 @@ public class WalleBleService extends Service {
                 boolean exist = true;
                 int index = 0;
                 int segmentationIndex = 0;
-                while(exist){
+                while (exist) {
                     if (index > 0 && WalleBleConfig.getSegmentationSleepTime() > 0) {
                         try {
                             sleep(WalleBleConfig.getSegmentationSleepTime());
@@ -413,29 +426,29 @@ public class WalleBleService extends Service {
                     }
                     int size;
                     byte[] byteTag;
-                    if(WalleBleConfig.isSegmentationAddIndex() && index > 0){
-                        if(index + maxLength - 1 <= content.length){
+                    if (WalleBleConfig.isSegmentationAddIndex() && index > 0) {
+                        if (index + maxLength - 1 <= content.length) {
                             size = maxLength;
-                        }else{
+                        } else {
                             size = content.length - index + 1;
                         }
                         byteTag = new byte[size];
                         byteTag[0] = (byte) segmentationIndex;
-                        System.arraycopy(content, index , byteTag, 1, byteTag.length - 1);
+                        System.arraycopy(content, index, byteTag, 1, byteTag.length - 1);
                         segmentationIndex++;
                         index += size - 1;
-                    }else {
-                        if(index + maxLength <= content.length){
+                    } else {
+                        if (index + maxLength <= content.length) {
                             size = maxLength;
-                        }else{
+                        } else {
                             size = content.length - index;
                         }
                         byteTag = new byte[size];
-                        System.arraycopy(content, index , byteTag, 0, byteTag.length);
+                        System.arraycopy(content, index, byteTag, 0, byteTag.length);
                         index += size;
                     }
                     writeAndNotify(notifyServiceUUID, notifyCharacteristicUUID, writeServiceUUID, writeCharacteristicUUID, byteTag);
-                    if(index >= content.length){
+                    if (index >= content.length) {
                         exist = false;
                     }
                 }
@@ -472,18 +485,67 @@ public class WalleBleService extends Service {
         return null;
     }
 
+    /**
+     * 开始扫描设备
+     */
+    private void startScan() {
+        bluetoothLeScanner.startScan(scanCallback);
+        deviceMap.clear();
+        handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                sendBroadcast(new Intent(ACTION_SCAN_TIMEOUT));
+                stopScan();
+            }
+        }, WalleBleConfig.getScanBleTimeoutTime());
+    }
+
+    private void stopScan() {
+        bluetoothLeScanner.stopScan(scanCallback);
+    }
+
+    ScanCallback scanCallback = new ScanCallback() {
+        @Override
+        public void onScanResult(int callbackType, ScanResult result) {
+            String name = result.getDevice().getName();
+            String address = result.getDevice().getAddress();
+            int rssi = result.getRssi();
+            LogUtil.d("ScanResult", "address:" + address + " name:" + name + " rssi:" + rssi);
+            if (name == null || name.length() == 0) {
+                return;
+            }
+            //super.onScanResult(callbackType, result);
+            deviceMap.put(address, result.getDevice());
+            Intent intent = new Intent(ACTION_SCAN_RESULT);
+            intent.putExtra("rssi", rssi);
+            intent.putExtra("address", address);
+            intent.putExtra("name", name);
+            sendBroadcast(intent);
+        }
+
+        @Override
+        public void onBatchScanResults(List<ScanResult> results) {
+            super.onBatchScanResults(results);
+        }
+
+        @Override
+        public void onScanFailed(int errorCode) {
+            super.onScanFailed(errorCode);
+        }
+    };
+
     @Override
     public void onDestroy() {
-        super.onDestroy();
         BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_NOT_CONNECTED);
         BleUtil.bleAddress = null;
         BleUtil.bleName = null;
         unregisterReceiver(broadcastReceiver);
         disconnect();
         close();
-        if(reconnectionRunnable != null && handler != null){
+        if (reconnectionRunnable != null && handler != null) {
             handler.removeCallbacks(reconnectionRunnable);
         }
         LogUtil.d(TAG, "WalleBleService onDestroy");
+        super.onDestroy();
     }
 }
