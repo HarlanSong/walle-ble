@@ -162,9 +162,6 @@ BleUtil.bleAddress
 
 // 已连接设备名称
 BleUtil.bleName
-
-
-
 ```
 
 ### 配置
@@ -196,9 +193,8 @@ WalleBleConfig.setScanBleTimeoutTime(int scanBleTimeoutTime)
 **1.0.7**
 * 优化蓝牙设备连接速度
 * 最低Android版本由19升至21
-**1.0.6**
-**1.0.5**
-**1.0.4**
+* 添加未开启蓝牙广播
+**1.0.6、1.0.5、.0.4**
 * 修复BUG
 
 **1.0.3**
