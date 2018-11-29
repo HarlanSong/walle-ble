@@ -61,6 +61,7 @@ public class WalleBleService extends Service {
     public final static String ACTION_DEVICE_RESULT = "cn.songhaiqing.walle.ble.ACTION_DEVICE_RESULT";
     public final static String ACTION_SCAN_RESULT = "cn.songhaiqing.walle.ble.ACTION_SCAN_RESULT"; // 搜索设备新结果
     public final static String ACTION_SCAN_TIMEOUT = "cn.songhaiqing.walle.ble.ACTION_SCAN_TIMEOUT"; // 搜索设备超时并结束
+    public final static String ACTION_BLUETOOTH_NOT_OPEN = "cn.songhaiqing.walle.ble.ACTION_BLUETOOTH_NOT_OPEN"; // 蓝牙未开启
 
     public final static String EXTRA_DATA = "EXTRA_DATA";
     public final static String EXTRA_DATA_NOTIFY_SERVICE_UUID = "EXTRA_DATA_NOTIFY_SERVICE_UUID";
@@ -209,6 +210,7 @@ public class WalleBleService extends Service {
         }
         if (!bluetoothAdapter.isEnabled()) {
             LogUtil.w(TAG, "蓝牙未打开");
+            sendBroadcast(new Intent(ACTION_BLUETOOTH_NOT_OPEN));
             return false;
         }
 
@@ -224,6 +226,10 @@ public class WalleBleService extends Service {
     }
 
     private boolean connect(final String address) {
+        if (!initialize()) {
+            BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_FAIL);
+            return false;
+        }
         LogUtil.d(TAG, "开始连接设备MAC地址:" + address);
         artificialDisconnect = false;
         if (mBluetoothAdapter == null || address == null) {
@@ -489,6 +495,11 @@ public class WalleBleService extends Service {
      * 开始扫描设备
      */
     private void startScan() {
+        initialize();
+        if(bluetoothLeScanner == null){
+            LogUtil.w(TAG, "bluetoothLeScanner is null");
+            return ;
+        }
         bluetoothLeScanner.startScan(scanCallback);
         deviceMap.clear();
         handler.postDelayed(new Runnable() {
@@ -501,6 +512,9 @@ public class WalleBleService extends Service {
     }
 
     private void stopScan() {
+        if(bluetoothLeScanner == null){
+            return ;
+        }
         bluetoothLeScanner.stopScan(scanCallback);
     }
 

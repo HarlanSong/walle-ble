@@ -24,13 +24,55 @@ implementation 'com.github.HarlanSong:walle-ble:1.0.6'
 ## 文档
 ### 打开扫描界面
 
- ![img](https://github.com/HarlanSong/Walle/blob/master/images/bleScan.png?raw=true)
+ ![img](https://github.com/HarlanSong/walle-ble/blob/master/images/ScanDevice.jpg)
 
 ```java
 Intent intent = new Intent(this, DeviceScanActivity.class);
 startActivityForResult(intent, REQUEST_BIND_DEVICE);
 ```
 *REQUEST_BIND_DEVICE 自行定义回调常量（int）*
+
+### 或者自这义界面
+
+利用监听广播实现结果展示
+
+
+**开始扫描设备**
+```java
+BleUtil.startScan(final Context context)
+```
+
+*停止扫描设备**
+```java
+BleUtil.stopScan(Context context)
+```
+
+**添加监听扫描结果广告**
+```java
+IntentFilter intentFilter = new IntentFilter();
+intentFilter.addAction(WalleBleService.ACTION_SCAN_RESULT);
+intentFilter.addAction(WalleBleService.ACTION_SCAN_TIMEOUT);
+registerReceiver(scanResultBroadcastReceiver, intentFilter);
+```
+
+**收听结果示例**
+```java
+BroadcastReceiver scanResultBroadcastReceiver = new BroadcastReceiver() {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        if (WalleBleService.ACTION_SCAN_RESULT.equals(intent.getAction())) {
+            BluetoothDeviceEntity device = new BluetoothDeviceEntity();
+            device.setRssi(intent.getIntExtra("rssi", 0));
+            device.setName(intent.getStringExtra("name"));
+            device.setAddress(intent.getStringExtra("address"));
+            addBluetoothDeviceEntity(device);
+        } else if (WalleBleService.ACTION_SCAN_TIMEOUT.equals(intent.getAction())) {
+            mScanning = false;
+            refreshOptionStatus();
+        }
+    }
+};
+```
 
 ### 选择蓝牙设置成功回调,并连接设备
 
@@ -121,6 +163,8 @@ BleUtil.bleAddress
 // 已连接设备名称
 BleUtil.bleName
 
+
+
 ```
 
 ### 配置
@@ -140,11 +184,22 @@ WalleBleConfig.setSegmentationAddIndex(boolean segmentationAddIndex)
 
 // 分包发送间隔时间（毫秒）
 WalleBleConfig.setSegmentationSleepTime(int segmentationSleepTime)
+
+// 设置扫描设备超时时间（毫秒） 默认20秒
+WalleBleConfig.setScanBleTimeoutTime(int scanBleTimeoutTime) 
 ```
 
 
-
 ## 更新日志
+
+
+**1.0.7**
+* 优化蓝牙设备连接速度
+* 最低Android版本由19升至21
+**1.0.6**
+**1.0.5**
+**1.0.4**
+* 修复BUG
 
 **1.0.3**
 * 【修复】设备连接成功立即发送命令并立即结束会闪退问题
