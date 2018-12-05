@@ -194,7 +194,8 @@ WalleBleConfig.setScanBleTimeoutTime(int scanBleTimeoutTime)
 * 优化蓝牙设备连接速度
 * 最低Android版本由19升至21
 * 添加未开启蓝牙广播
-**1.0.6、1.0.5、.0.4**
+
+**1.0.6、1.0.5、1.0.4**
 * 修复BUG
 
 **1.0.3**

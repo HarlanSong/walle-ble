@@ -49,8 +49,8 @@ public class WalleBleService extends Service {
     public static final String ACTION_CONNECT_DEVICE = "cn.songhaiqing.walle.ble.ACTION_CONNECT_DEVICE";
     public final static String ACTION_START_SCAN = "cn.songhaiqing.walle.ble.ACTION_START_SCAN"; // 开始扫描设备
     public final static String ACTION_STOP_SCAN = "cn.songhaiqing.walle.ble.ACTION_STOP_SCAN"; // 结束扫描设备
-
     public static final String ACTION_DISCONNECT_DEVICE = "cn.songhaiqing.walle.ble.ACTION_DISCONNECT_DEVICE";
+
     public final static String ACTION_GATT_DISCONNECTED = "cn.songhaiqing.walle.ble.ACTION_GATT_DISCONNECTED";
     public final static String ACTION_GATT_SERVICES_DISCOVERED = "cn.songhaiqing.walle.ble.ACTION_GATT_SERVICES_DISCOVERED";
     public final static String ACTION_CONNECTED_SUCCESS = "cn.songhaiqing.walle.ble.ACTION_CONNECTED_SUCCESS";
@@ -156,7 +156,7 @@ public class WalleBleService extends Service {
                 BleUtil.bleName = null;
                 BleUtil.bleAddress = null;
                 BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_NOT_CONNECTED);
-                LogUtil.i(TAG, "Disconnected from GATT server.");
+                LogUtil.i(TAG, "设备已断开连接");
                 broadcastUpdate(intentAction);
             }
         }
