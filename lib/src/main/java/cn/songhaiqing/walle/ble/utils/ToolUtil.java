@@ -7,7 +7,14 @@ import java.util.List;
 public class ToolUtil {
 
     public static boolean isServiceRunning(String serviceName, Context context) {
-        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        if(context == null){
+            return false;
+        }
+        Object service =  context.getSystemService(Context.ACTIVITY_SERVICE);
+        if(service == null){
+            return false;
+        }
+        ActivityManager am = (ActivityManager) service;
         List<ActivityManager.RunningServiceInfo> runningServices = am.getRunningServices(100);
         for (ActivityManager.RunningServiceInfo runningServiceInfo : runningServices) {
             String className = runningServiceInfo.service.getClassName();
