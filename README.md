@@ -10,7 +10,7 @@ maven { url "https://jitpack.io" }
 
 **Gradle 引入库**
 ```groovy
-implementation 'com.github.HarlanSong:walle-ble:1.0.8'
+implementation 'com.github.HarlanSong:walle-ble:1.0.9'
 ```
 
 **添加权限**
@@ -186,28 +186,3 @@ WalleBleConfig.setSegmentationSleepTime(int segmentationSleepTime)
 WalleBleConfig.setScanBleTimeoutTime(int scanBleTimeoutTime) 
 ```
 
-
-## 更新日志
-
-
-**1.0.7**
-* 优化蓝牙设备连接速度
-* 最低Android版本由19升至21
-* 添加未开启蓝牙广播
-
-**1.0.6、1.0.5、1.0.4**
-* 修复BUG
-
-**1.0.3**
-* 【修复】设备连接成功立即发送命令并立即结束会闪退问题
-* 【修复】蓝牙“连接中”状态更新不及时问题
-* 【添加】判断服务可用、打开蓝牙功能
-* 【添加】对蓝牙重试和失败状态监听
-* 【改进】BleUtil类`void connectDevice(final Context context, final String address)` 替换原`boolean connectDevice(final Context context, String name, final String address)`方法
-
-
-**1.0.2(20181102)**
-* 修复一些情况下状态判断错误问题。
-
-**1.0.1(20181102)**
-* 从jcenter移至jitpack的第一个版本，重新开始版本号。
