@@ -10,7 +10,7 @@ maven { url "https://jitpack.io" }
 
 **Gradle 引入库**
 ```groovy
-implementation 'com.github.HarlanSong:walle-ble:1.0.7'
+implementation 'com.github.HarlanSong:walle-ble:1.0.8'
 ```
 
 **添加权限**
