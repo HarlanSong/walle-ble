@@ -267,7 +267,10 @@ public class WalleBleService extends Service {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                if (!artificialDisconnect && !isConnected() && !TextUtils.isEmpty(mBluetoothDeviceAddress) && reconnectionNumber < maxReconnectionNumber) {
+                if(artificialDisconnect){
+                    return;
+                }
+                if (!isConnected() && !TextUtils.isEmpty(mBluetoothDeviceAddress) && reconnectionNumber < maxReconnectionNumber) {
                     reconnectionNumber++;
                     LogUtil.i(TAG, "正在重连，重连次数:" + reconnectionNumber);
                     Intent intent = new Intent(ACTION_RECONNECTION);
