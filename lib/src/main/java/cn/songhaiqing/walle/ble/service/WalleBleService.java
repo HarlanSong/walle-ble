@@ -99,7 +99,7 @@ public class WalleBleService extends Service {
 
         timer = new Timer();
         deviceMap = new HashMap<>();
-        initialize();
+        initialize(false);
     }
 
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
@@ -195,7 +195,7 @@ public class WalleBleService extends Service {
         sendBroadcast(intent);
     }
 
-    private boolean initialize() {
+    private boolean initialize(boolean bleNotOpenSendBroadcast) {
         if (mBluetoothManager == null) {
             mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
             if (mBluetoothManager == null) {
@@ -210,7 +210,9 @@ public class WalleBleService extends Service {
         }
         if (!bluetoothAdapter.isEnabled()) {
             LogUtil.w(TAG, "蓝牙未打开");
-            sendBroadcast(new Intent(ACTION_BLUETOOTH_NOT_OPEN));
+            if(bleNotOpenSendBroadcast){
+                sendBroadcast(new Intent(ACTION_BLUETOOTH_NOT_OPEN));
+            }
             return false;
         }
 
@@ -226,18 +228,12 @@ public class WalleBleService extends Service {
     }
 
     private boolean connect(final String address) {
-        if (!initialize()) {
+        if (!initialize(true) || TextUtils.isEmpty(address)) {
             BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_FAIL);
             return false;
         }
         LogUtil.d(TAG, "开始连接设备MAC地址:" + address);
         artificialDisconnect = false;
-        if (mBluetoothAdapter == null || address == null) {
-            LogUtil.w(TAG, "BluetoothAdapter not initialized or unspecified address.");
-            if (!initialize()) {
-                return false;
-            }
-        }
         if (BleUtil.getConnectStatus(getBaseContext()) == BleUtil.CONNECT_STATUS_SUCCESS && address.equals(mBluetoothDeviceAddress)) {
             LogUtil.d(TAG, "当前设备已连接，无需要重复连接");
             return true;
@@ -500,7 +496,7 @@ public class WalleBleService extends Service {
      * 开始扫描设备
      */
     private void startScan() {
-        initialize();
+        initialize(true);
         if(bluetoothLeScanner == null){
             LogUtil.w(TAG, "bluetoothLeScanner is null");
             return ;
