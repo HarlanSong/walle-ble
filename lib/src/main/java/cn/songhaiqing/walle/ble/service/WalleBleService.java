@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
 import android.text.TextUtils;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+
 import cn.songhaiqing.walle.ble.utils.BleUtil;
 import cn.songhaiqing.walle.ble.utils.LogUtil;
 import cn.songhaiqing.walle.ble.utils.StringUtil;
@@ -62,6 +64,7 @@ public class WalleBleService extends Service {
     public final static String ACTION_DEVICE_RESULT = "cn.songhaiqing.walle.ble.ACTION_DEVICE_RESULT";
     public final static String ACTION_SCAN_RESULT = "cn.songhaiqing.walle.ble.ACTION_SCAN_RESULT"; // 搜索设备新结果
     public final static String ACTION_SCAN_TIMEOUT = "cn.songhaiqing.walle.ble.ACTION_SCAN_TIMEOUT"; // 搜索设备超时并结束
+    @Deprecated
     public final static String ACTION_BLUETOOTH_NOT_OPEN = "cn.songhaiqing.walle.ble.ACTION_BLUETOOTH_NOT_OPEN"; // 蓝牙未开启
 
     public final static String EXTRA_DATA = "EXTRA_DATA";
@@ -76,8 +79,13 @@ public class WalleBleService extends Service {
     private BluetoothGattCharacteristic notifyBluetoothGattCharacteristic;
     private Timer timer;
 
+    private Timer reconnectTimer;
+    private TimerTask reconnectTimerTask;
+
     private boolean operationDone = true;
     private boolean artificialDisconnect = true;
+    // 是否是连接扫描，如果是连接扫描则扫与连接MAC地址相同的结果就停止扫描
+    private boolean isConnectScan;
     private final int maxReconnectionNumber = 3;
     private int reconnectionNumber = 0;
     private final int maxLength = 20;
@@ -96,6 +104,9 @@ public class WalleBleService extends Service {
         intentFilter.addAction(ACTION_START_SCAN);
         intentFilter.addAction(ACTION_STOP_SCAN);
         registerReceiver(broadcastReceiver, intentFilter);
+
+        IntentFilter statusFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
+        registerReceiver(bleStatusBroadcastReceiver, statusFilter);
 
         timer = new Timer();
         deviceMap = new HashMap<>();
@@ -127,7 +138,7 @@ public class WalleBleService extends Service {
                 byte[] data = intent.getByteArrayExtra(EXTRA_DATA);
                 writeBluetooth(notifyServiceUUID, notifyCharacteristicUUID, writeServiceUUID, writeCharacteristicUUID, data, segmentationContent);
             } else if (ACTION_START_SCAN.equals(action)) {
-                startScan();
+                startScan(false);
             } else if (ACTION_STOP_SCAN.equals(action)) {
                 stopScan();
             }
@@ -137,19 +148,21 @@ public class WalleBleService extends Service {
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+            LogUtil.d(TAG, "onConnectionStateChange status:" + status + " newState:" + newState);
             String intentAction;
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 intentAction = ACTION_CONNECTED_SUCCESS;
                 mConnectionState = STATE_CONNECTED;
                 String bleName = gatt.getDevice().getName();
                 String bleAddress = gatt.getDevice().getAddress();
+                LogUtil.i(TAG, "成功连接设备 ,设备名称:" + bleName + " MAC地址:" + bleAddress + " 接耗时:" + (System.currentTimeMillis() - connectTimeTag) + "ms");
                 BleUtil.bleName = bleName;
                 BleUtil.bleAddress = bleName;
-                LogUtil.i(TAG, "成功连接设备 ,设备名称:" + bleName + " MAC地址:" + bleAddress);
-                LogUtil.d(TAG, "Attempting to start service discovery:" + mBluetoothGatt.discoverServices());
+                stopScan();
+                cancelReconnectTimerTask();
                 sendBroadcast(new Intent(intentAction));
                 BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_SUCCESS);
-                LogUtil.i(TAG, "本次连接耗时：" + (System.currentTimeMillis() - connectTimeTag) + " 毫秒");
+                mBluetoothGatt.discoverServices();
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED && status != 133) {
                 intentAction = ACTION_GATT_DISCONNECTED;
                 mConnectionState = STATE_DISCONNECTED;
@@ -209,10 +222,8 @@ public class WalleBleService extends Service {
             return false;
         }
         if (!bluetoothAdapter.isEnabled()) {
-            LogUtil.w(TAG, "蓝牙未打开");
-            if(bleNotOpenSendBroadcast){
-                sendBroadcast(new Intent(ACTION_BLUETOOTH_NOT_OPEN));
-            }
+            LogUtil.w(TAG, "蓝牙未打开，正在开启蓝牙");
+            bluetoothAdapter.enable();
             return false;
         }
 
@@ -228,6 +239,7 @@ public class WalleBleService extends Service {
     }
 
     private boolean connect(final String address) {
+        mBluetoothDeviceAddress = address;
         if (!initialize(true) || TextUtils.isEmpty(address)) {
             BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_FAIL);
             return false;
@@ -250,7 +262,6 @@ public class WalleBleService extends Service {
             return false;
         }
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
-        mBluetoothDeviceAddress = address;
         mConnectionState = STATE_CONNECTING;
         checkConnectStatus();
         return true;
@@ -260,13 +271,19 @@ public class WalleBleService extends Service {
         if (artificialDisconnect || isConnected()) {
             return;
         }
-        timer.schedule(new TimerTask() {
+        if (reconnectTimerTask != null) {
+            reconnectTimerTask.cancel();
+        }
+
+        reconnectTimerTask = new TimerTask() {
             @Override
             public void run() {
-                if(artificialDisconnect){
+                if (artificialDisconnect) {
                     return;
                 }
                 if (!isConnected() && !TextUtils.isEmpty(mBluetoothDeviceAddress) && reconnectionNumber < maxReconnectionNumber) {
+                    disconnect();
+                    close();
                     reconnectionNumber++;
                     LogUtil.i(TAG, "正在重连，重连次数:" + reconnectionNumber);
                     Intent intent = new Intent(ACTION_RECONNECTION);
@@ -279,7 +296,24 @@ public class WalleBleService extends Service {
                     sendBroadcast(new Intent(ACTION_CONNECT_FAIL));
                 }
             }
-        }, 10000);
+        };
+
+        reconnectTimer = new Timer();
+        reconnectTimer.schedule(reconnectTimerTask, 10000);
+    }
+
+    /**
+     * 取消重连定时器
+     */
+    private void cancelReconnectTimerTask() {
+        if (reconnectTimerTask != null) {
+            reconnectTimerTask.cancel();
+            reconnectTimerTask = null;
+        }
+        if (reconnectTimer != null) {
+            reconnectTimer.cancel();
+            reconnectTimer = null;
+        }
     }
 
     private void disconnect() {
@@ -289,6 +323,7 @@ public class WalleBleService extends Service {
         }
         if (mBluetoothGatt != null) {
             mBluetoothGatt.disconnect();
+            mBluetoothGatt.close();
         }
         artificialDisconnect = true;
         notifyBluetoothGattCharacteristic = null;
@@ -322,7 +357,7 @@ public class WalleBleService extends Service {
                 public void run() {
                     readCharacteristic(characteristic, retryNumber + 1);
                 }
-            },WalleBleConfig.getRetrySleepTime() );
+            }, WalleBleConfig.getRetrySleepTime());
         } else if (!operationDone) {
             broadcastUpdate(ACTION_EXECUTED_FAILED);
             operationDone = true;
@@ -402,7 +437,7 @@ public class WalleBleService extends Service {
                 bluetoothGattCharacteristicWrite.setValue(writeData);
                 writeCharacteristic(bluetoothGattCharacteristicWrite, 0);
             }
-        },WalleBleConfig.getBleWriteDelayedTime());
+        }, WalleBleConfig.getBleWriteDelayedTime());
     }
 
     protected void writeBluetooth(final String notifyServiceUUID, final String notifyCharacteristicUUID,
@@ -461,7 +496,7 @@ public class WalleBleService extends Service {
     }
 
     private void writeCharacteristic(final BluetoothGattCharacteristic bluetoothGattCharacteristic, final int retryNumber) {
-        if(mBluetoothGatt == null){
+        if (mBluetoothGatt == null) {
             return;
         }
         boolean status = mBluetoothGatt.writeCharacteristic(bluetoothGattCharacteristic);
@@ -480,7 +515,7 @@ public class WalleBleService extends Service {
                 public void run() {
                     writeCharacteristic(bluetoothGattCharacteristic, retryNumber + 1);
                 }
-            },WalleBleConfig.getRetrySleepTime() );
+            }, WalleBleConfig.getRetrySleepTime());
         } else if (!operationDone) {
             broadcastUpdate(ACTION_EXECUTED_FAILED);
             operationDone = true;
@@ -495,11 +530,18 @@ public class WalleBleService extends Service {
     /**
      * 开始扫描设备
      */
-    private void startScan() {
-        initialize(true);
-        if(bluetoothLeScanner == null){
+    private void startScan(boolean isConnectScan) {
+        this.isConnectScan = isConnectScan;
+        if (isConnected()) {
+            disconnect();
+            close();
+        }
+        if (!initialize(true)) {
+            return;
+        }
+        if (bluetoothLeScanner == null) {
             LogUtil.w(TAG, "bluetoothLeScanner is null");
-            return ;
+            return;
         }
         bluetoothLeScanner.startScan(scanCallback);
         deviceMap.clear();
@@ -509,12 +551,12 @@ public class WalleBleService extends Service {
                 sendBroadcast(new Intent(ACTION_SCAN_TIMEOUT));
                 stopScan();
             }
-        },WalleBleConfig.getScanBleTimeoutTime());
+        }, WalleBleConfig.getScanBleTimeoutTime());
     }
 
     private void stopScan() {
-        if(bluetoothLeScanner == null){
-            return ;
+        if (bluetoothLeScanner == null) {
+            return;
         }
         bluetoothLeScanner.stopScan(scanCallback);
     }
@@ -524,13 +566,18 @@ public class WalleBleService extends Service {
         public void onScanResult(int callbackType, ScanResult result) {
             String name = result.getDevice().getName();
             String address = result.getDevice().getAddress();
+            deviceMap.put(address, result.getDevice());
+            if (isConnectScan && (TextUtils.isEmpty(mBluetoothDeviceAddress) || mBluetoothDeviceAddress.equals(address))) {
+                LogUtil.d(TAG, "扫描到连接地址，并停止扫描。");
+                stopScan();
+            }
             int rssi = result.getRssi();
             LogUtil.d("ScanResult", "address:" + address + " name:" + name + " rssi:" + rssi);
             if (name == null || name.length() == 0) {
                 return;
             }
             //super.onScanResult(callbackType, result);
-            deviceMap.put(address, result.getDevice());
+
             Intent intent = new Intent(ACTION_SCAN_RESULT);
             intent.putExtra("rssi", rssi);
             intent.putExtra("address", address);
@@ -551,7 +598,7 @@ public class WalleBleService extends Service {
 
     @Override
     public void onDestroy() {
-        if(timer != null){
+        if (timer != null) {
             timer.cancel();
             timer = null;
         }
@@ -559,9 +606,39 @@ public class WalleBleService extends Service {
         BleUtil.bleAddress = null;
         BleUtil.bleName = null;
         unregisterReceiver(broadcastReceiver);
+        unregisterReceiver(bleStatusBroadcastReceiver);
         disconnect();
         close();
         LogUtil.d(TAG, "onDestroy");
         super.onDestroy();
     }
+
+    private BroadcastReceiver bleStatusBroadcastReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch (intent.getAction()) {
+                case BluetoothAdapter.ACTION_STATE_CHANGED:
+                    int blueState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0);
+                    LogUtil.d(TAG, "blueState:" + blueState);
+                    switch (blueState) {
+                        case BluetoothAdapter.STATE_TURNING_ON:
+                            break;
+                        case BluetoothAdapter.STATE_ON:
+                            if (!TextUtils.isEmpty(mBluetoothDeviceAddress)) {
+                                startScan(true);
+                                connect(mBluetoothDeviceAddress);
+                            } else if (!isConnectScan) {
+                                startScan(isConnectScan);
+                            }
+                            break;
+                        case BluetoothAdapter.STATE_TURNING_OFF:
+                            break;
+                        case BluetoothAdapter.STATE_OFF:
+                            break;
+                    }
+                    break;
+            }
+        }
+    };
 }

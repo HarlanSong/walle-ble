@@ -4,8 +4,9 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -16,6 +17,7 @@ import cn.songhaiqing.walle.ble.utils.WalleBleConfig;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private final int REQUEST_BIND_DEVICE = 1;
+    private static final int REQUEST_OPEN_BLUETOOTH = 2;
 
     private Button btnDisconnect;
     private Button btnScan;
@@ -28,7 +30,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         intentFilter.addAction(WalleBleService.ACTION_CONNECTED_SUCCESS);
         intentFilter.addAction(WalleBleService.ACTION_GATT_DISCONNECTED);
         intentFilter.addAction(WalleBleService.ACTION_DEVICE_RESULT);
-
         registerReceiver(bleReceiver, intentFilter);
 
         btnDisconnect = findViewById(R.id.btn_disconnect);
@@ -37,7 +38,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnScan.setOnClickListener(this);
 
         WalleBleConfig.setDebug(true);
+        autoConnection();
+
     }
+
+    private void autoConnection(){
+        String address = "";
+        if(TextUtils.isEmpty(address)){
+            return;
+        }
+        BleUtil.connectDevice(this,address);
+    }
+
     private BroadcastReceiver bleReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -60,8 +72,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             String name = data.getStringExtra("name");
             String macAddress = data.getStringExtra("macAddress");
             Toast.makeText(this, "name:" + name + " macAddress:" + macAddress, Toast.LENGTH_LONG).show();
-            BleUtil.connectDevice(this, name, macAddress);
-
+            BleUtil.connectDevice(this,  macAddress);
         }
     }
 

@@ -2,7 +2,6 @@ package cn.songhaiqing.walle.ble.activity;
 
 import android.Manifest;
 import android.app.Activity;
-import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -39,7 +38,6 @@ import cn.songhaiqing.walle.ble.utils.BleUtil;
 public class DeviceScanActivity extends Activity implements AdapterView.OnItemClickListener, View.OnClickListener {
     private LeDeviceListAdapter mLeDeviceListAdapter;
     private boolean mScanning;
-    private static final int REQUEST_OPEN_BLUETOOTH = 1;
     private static final int PERMISSION_REQUEST_COARSE_LOCATION = 1;
 
     private ListView lvContent;
@@ -87,7 +85,6 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
         lvContent.setAdapter(mLeDeviceListAdapter);
 
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(WalleBleService.ACTION_BLUETOOTH_NOT_OPEN);
         intentFilter.addAction(WalleBleService.ACTION_SCAN_RESULT);
         intentFilter.addAction(WalleBleService.ACTION_SCAN_TIMEOUT);
         registerReceiver(scanResultBroadcastReceiver, intentFilter);
@@ -95,7 +92,7 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
 
         bluetoothDeviceEntityList.clear();
         mLeDeviceListAdapter.notifyDataSetChanged();
-        if(validPermission()){
+        if (validPermission()) {
             BleUtil.startScan(this);
             mScanning = true;
             refreshOptionStatus();
@@ -113,7 +110,7 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
     }
 
     private boolean validPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M  && this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_REQUEST_COARSE_LOCATION);
             return false;
         }
@@ -123,25 +120,13 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(requestCode == PERMISSION_REQUEST_COARSE_LOCATION && grantResults.length > 0){
+        if (requestCode == PERMISSION_REQUEST_COARSE_LOCATION && grantResults.length > 0) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 BleUtil.startScan(this);
             } else {
                 finish();
             }
         }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(requestCode == REQUEST_OPEN_BLUETOOTH){
-            if ( resultCode == Activity.RESULT_CANCELED) {
-                finish();
-            }else{
-                BleUtil.startScan(this);
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, data);
     }
 
     @Override
@@ -242,10 +227,7 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
     BroadcastReceiver scanResultBroadcastReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(WalleBleService.ACTION_BLUETOOTH_NOT_OPEN.equals(intent.getAction())){
-                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-                startActivityForResult(enableBtIntent, REQUEST_OPEN_BLUETOOTH);
-            }else if (WalleBleService.ACTION_SCAN_RESULT.equals(intent.getAction())) {
+            if (WalleBleService.ACTION_SCAN_RESULT.equals(intent.getAction())) {
                 BluetoothDeviceEntity device = new BluetoothDeviceEntity();
                 device.setRssi(intent.getIntExtra("rssi", 0));
                 device.setName(intent.getStringExtra("name"));
@@ -258,7 +240,7 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
         }
     };
 
-    private synchronized void addBluetoothDeviceEntity(BluetoothDeviceEntity device ){
+    private synchronized void addBluetoothDeviceEntity(BluetoothDeviceEntity device) {
         int index = -1;
         for (int i = 0; i < bluetoothDeviceEntityList.size(); i++) {
             if (bluetoothDeviceEntityList.get(i).getAddress().equals(device.getAddress())) {
