@@ -110,7 +110,6 @@ public class WalleBleService extends Service {
 
         timer = new Timer();
         deviceMap = new HashMap<>();
-        initialize(false);
     }
 
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
@@ -208,7 +207,7 @@ public class WalleBleService extends Service {
         sendBroadcast(intent);
     }
 
-    private boolean initialize(boolean bleNotOpenSendBroadcast) {
+    private boolean initialize() {
         if (mBluetoothManager == null) {
             mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
             if (mBluetoothManager == null) {
@@ -240,7 +239,7 @@ public class WalleBleService extends Service {
 
     private boolean connect(final String address) {
         mBluetoothDeviceAddress = address;
-        if (!initialize(true) || TextUtils.isEmpty(address)) {
+        if (!initialize() || TextUtils.isEmpty(address)) {
             BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_FAIL);
             return false;
         }
@@ -536,7 +535,7 @@ public class WalleBleService extends Service {
             disconnect();
             close();
         }
-        if (!initialize(true)) {
+        if (!initialize()) {
             return;
         }
         if (bluetoothLeScanner == null) {
