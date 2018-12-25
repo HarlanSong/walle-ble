@@ -7,15 +7,18 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
 import cn.songhaiqing.walle.ble.activity.DeviceScanActivity;
 import cn.songhaiqing.walle.ble.service.WalleBleService;
 import cn.songhaiqing.walle.ble.utils.BleUtil;
 import cn.songhaiqing.walle.ble.utils.WalleBleConfig;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+    private final String TAG = getClass().getName();
     private final int REQUEST_BIND_DEVICE = 1;
     private static final int REQUEST_OPEN_BLUETOOTH = 2;
 
@@ -43,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void autoConnection(){
+        //String address = "C8:41:A5:F6:E8:74";
         String address = "";
         if(TextUtils.isEmpty(address)){
             return;
@@ -54,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
+            Log.d(TAG,action);
             if (WalleBleService.ACTION_CONNECTED_SUCCESS.equals(action)) {
 
             } else if (WalleBleService.ACTION_GATT_DISCONNECTED.equals(action)) {

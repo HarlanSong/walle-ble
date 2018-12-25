@@ -176,11 +176,6 @@ public class WalleBleService extends Service {
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             LogUtil.d(TAG, "onServicesDiscovered status:" + status);
-            if (status == BluetoothGatt.GATT_SUCCESS && isConnected()) {
-                broadcastUpdate(ACTION_CONNECTED_SUCCESS);
-            } else {
-                LogUtil.w(TAG, "onServicesDiscovered received: " + status);
-            }
         }
 
         @Override
