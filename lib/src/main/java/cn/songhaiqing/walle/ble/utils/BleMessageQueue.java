@@ -33,6 +33,10 @@ public class BleMessageQueue {
         bleTaskMessage.setNotifyCharacteristicUUID(notifyCharacteristicUUID);
         bleTaskMessage.setWrite(write);
         bleTaskMessage.setContent(content);
+        if(bleTaskMessages.contains(bleTaskMessage)){
+            LogUtil.d(TAG, "添加的重复命令，已跳过");
+            return;
+        }
         bleTaskMessages.add(bleTaskMessage);
         LogUtil.d(TAG, "新增命令任务，添加后任务数量：" + bleTaskMessages.size() + " 执行状态：" + isRunning);
         if (!isRunning) {
