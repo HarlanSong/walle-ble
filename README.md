@@ -2,6 +2,13 @@
 # walle-ble
  低功耗蓝牙辅助库
 
+## 功能及特点
+* 简化蓝牙连接及操作
+* 无其他依赖
+* 自带搜索界面
+* 兼容不同蓝牙方案
+* 命令队列
+
 ## 使用
 **repositories中添加源**
 ```groovy
@@ -10,7 +17,7 @@ maven { url "https://jitpack.io" }
 
 **Gradle 引入库**
 ```groovy
-implementation 'com.github.HarlanSong:walle-ble:1.0.9'
+implementation 'com.github.HarlanSong:walle-ble:1.0.13'
 ```
 
 **添加权限**
@@ -164,25 +171,49 @@ BleUtil.bleAddress
 BleUtil.bleName
 ```
 
-### 配置
+### WalleBleConfig配置 
 
 ```java
-// Log前缀，默认为“Walle”
-WalleBleConfig.setLogTag(String tag)
+/**
+ * Log前缀
+ * @param 默认: WalleBle 
+ **/
+void setLogTag(String tag)
 
-// 是否开户DEBUG模式，默认false
-WalleBleConfig.setDebug(boolean isDebug)
+/**
+ * 是否开户DEBUG模式 
+ *  @param isDebug 默认:false
+ **/
+void setDebug(boolean isDebug)
 
-// 命令发送失败最多重试次数(默认 3)
-WalleBleConfig.setMaxRetryNumber(int maxRetryNumber)
+/**
+ * 命令发送失败重试次数
+ * @param maxRetryNumber 默认:3
+ **/ 
+void setMaxRetryNumber(int maxRetryNumber)
 
-// 分包时是否从第二个包开始在第0位添加序号，默认false
-WalleBleConfig.setSegmentationAddIndex(boolean segmentationAddIndex)
+/**
+ * 分包时是否从第二个包开始在第0位添加序号，
+ * @param segmentationAddIndex 默认:false
+ **/
+void setSegmentationAddIndex(boolean segmentationAddIndex)
 
-// 分包发送间隔时间（毫秒）
-WalleBleConfig.setSegmentationSleepTime(int segmentationSleepTime)
+/**
+ * 分包发送间隔时间
+ * @param segmentationSleepTime  单位：毫秒
+ **/ 
+void setSegmentationSleepTime(int segmentationSleepTime)
 
-// 设置扫描设备超时时间（毫秒） 默认20秒
-WalleBleConfig.setScanBleTimeoutTime(int scanBleTimeoutTime) 
+/**
+ * 设置扫描设备超时时间
+ *  @param scanBleTimeoutTime 单位：毫秒， 默认20000
+ **/ 
+void setScanBleTimeoutTime(int scanBleTimeoutTime)
+
+/**
+ * 设置命令发送后返回结果等待时间，默认2000毫秒，超过这个时间无返回数据则开始发送一下个命令
+ *  @param bleResultWaitTime 单位：毫秒
+ **/
+void setBleResultWaitTime(int bleResultWaitTime)
 ```
 
