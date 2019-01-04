@@ -10,6 +10,7 @@ public class WalleBleConfig {
     private static int retrySleepTime = 1000;
     private static int maxRetryNumber = 3;
     private static int scanBleTimeoutTime = 20000;
+    private static int bleResultWaitTime = 2000;
 
 
     public static void setLogTag(String tag) {
@@ -83,5 +84,17 @@ public class WalleBleConfig {
             return;
         }
         WalleBleConfig.scanBleTimeoutTime = scanBleTimeoutTime;
+    }
+
+    public static int getBleResultWaitTime() {
+        return bleResultWaitTime;
+    }
+
+    /**
+     * 设置命令发送后返回结果等待时间，默认2000毫秒，超过这个时间无返回数据则开始发送一下个命令
+     * @param bleResultWaitTime
+     */
+    public static void setBleResultWaitTime(int bleResultWaitTime) {
+        WalleBleConfig.bleResultWaitTime = bleResultWaitTime;
     }
 }

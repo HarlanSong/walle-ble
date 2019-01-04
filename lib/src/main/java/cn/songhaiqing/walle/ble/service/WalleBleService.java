@@ -19,7 +19,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
 import android.text.TextUtils;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,13 +26,13 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
-
+import cn.songhaiqing.walle.ble.utils.BleMessageQueue;
 import cn.songhaiqing.walle.ble.utils.BleUtil;
 import cn.songhaiqing.walle.ble.utils.LogUtil;
 import cn.songhaiqing.walle.ble.utils.StringUtil;
 import cn.songhaiqing.walle.ble.utils.WalleBleConfig;
 
-public class WalleBleService extends Service {
+public class WalleBleService extends Service implements BleMessageQueue.BleExecute {
     private final String TAG = getClass().getName();
 
     private BluetoothManager mBluetoothManager;
@@ -92,6 +91,8 @@ public class WalleBleService extends Service {
     private long connectTimeTag;
     private Map<String, BluetoothDevice> deviceMap;
 
+    private BleMessageQueue bleMessageQueue;
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -110,6 +111,7 @@ public class WalleBleService extends Service {
 
         timer = new Timer();
         deviceMap = new HashMap<>();
+        bleMessageQueue = new BleMessageQueue(this);
     }
 
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
@@ -127,7 +129,8 @@ public class WalleBleService extends Service {
             } else if (ACTION_READ_BLE.equals(action)) {
                 String serviceUUID = intent.getStringExtra(EXTRA_DATA_READ_SERVICE_UUID);
                 String characteristicUUID = intent.getStringExtra(EXTRA_DATA_READ_CHARACTERISTIC_UUID);
-                readBluetooth(serviceUUID, characteristicUUID);
+                // readBluetooth(serviceUUID, characteristicUUID);
+                bleMessageQueue.addTask(serviceUUID, characteristicUUID, null, null, false, null);
             } else if (ACTION_WRITE_BLE.equals(action)) {
                 String notifyServiceUUID = intent.getStringExtra(EXTRA_DATA_NOTIFY_SERVICE_UUID);
                 String notifyCharacteristicUUID = intent.getStringExtra(EXTRA_DATA_NOTIFY_CHARACTERISTIC_UUID);
@@ -135,7 +138,8 @@ public class WalleBleService extends Service {
                 String writeCharacteristicUUID = intent.getStringExtra(EXTRA_DATA_WRITE_CHARACTERISTIC_UUID);
                 boolean segmentationContent = intent.getBooleanExtra(EXTRA_DATA_WRITE_SEGMENTATION, true);
                 byte[] data = intent.getByteArrayExtra(EXTRA_DATA);
-                writeBluetooth(notifyServiceUUID, notifyCharacteristicUUID, writeServiceUUID, writeCharacteristicUUID, data, segmentationContent);
+                bleMessageQueue.addTask(writeServiceUUID, writeCharacteristicUUID, notifyServiceUUID, notifyCharacteristicUUID, true, data);
+                // writeBluetooth(notifyServiceUUID, notifyCharacteristicUUID, writeServiceUUID, writeCharacteristicUUID, data, segmentationContent);
             } else if (ACTION_START_SCAN.equals(action)) {
                 startScan(false);
             } else if (ACTION_STOP_SCAN.equals(action)) {
@@ -332,8 +336,10 @@ public class WalleBleService extends Service {
     }
 
     public void readCharacteristic(final BluetoothGattCharacteristic characteristic, final int retryNumber) {
+        bleMessageQueue.refreshExecuteUpdateTime();
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             LogUtil.w(TAG, "BluetoothAdapter not initialized(readCharacteristic)");
+            bleMessageQueue.clear();
             return;
         }
         boolean status = mBluetoothGatt.readCharacteristic(characteristic);
@@ -355,10 +361,12 @@ public class WalleBleService extends Service {
         } else if (!operationDone) {
             broadcastUpdate(ACTION_EXECUTED_FAILED);
             operationDone = true;
+            bleMessageQueue.next();
         }
     }
 
     private void bluetoothUpdate(BluetoothGattCharacteristic characteristic) {
+        bleMessageQueue.refreshExecuteUpdateTime();
         String uuid = characteristic.getUuid().toString();
         String dataUINT16Str = StringUtil.bytesToHexStr(characteristic.getValue());
         ArrayList<Integer> dataArray = new ArrayList<>(StringUtil.bytesToArrayList(characteristic.getValue()));
@@ -373,14 +381,17 @@ public class WalleBleService extends Service {
     protected void readBluetooth(final String serviceUUID, final String characteristicUUID) {
         if (!isConnected()) {
             LogUtil.w(TAG, "Bluetooth  not connected");
+            bleMessageQueue.clear();
             return;
         }
         BluetoothGattService bluetoothGattService = mBluetoothGatt.getService(UUID.fromString(serviceUUID));
         if (bluetoothGattService == null) {
+            bleMessageQueue.next();
             return;
         }
         BluetoothGattCharacteristic bluetoothGattCharacteristic = bluetoothGattService.getCharacteristic(UUID.fromString(characteristicUUID));
         if (bluetoothGattCharacteristic == null) {
+            bleMessageQueue.next();
             return;
         }
         readCharacteristic(bluetoothGattCharacteristic, 0);
@@ -388,17 +399,21 @@ public class WalleBleService extends Service {
 
     private void writeAndNotify(String notifyServiceUUID, String notifyCharacteristicUUID, final String writeServiceUUID,
                                 final String writeCharacteristicUUID, final byte[] writeData) {
+        bleMessageQueue.refreshExecuteUpdateTime();
         LogUtil.d(TAG, "Write Data:" + StringUtil.bytesToHexStr(writeData));
         if (!isConnected()) {
             LogUtil.w(TAG, "Bluetooth  not connected");
+            bleMessageQueue.clear();
             return;
         }
         BluetoothGattService bluetoothGattServiceNotify = mBluetoothGatt.getService(UUID.fromString(notifyServiceUUID));
         if (bluetoothGattServiceNotify == null) {
+            bleMessageQueue.clear();
             return;
         }
         BluetoothGattCharacteristic bluetoothGattCharacteristicNotify = bluetoothGattServiceNotify.getCharacteristic(UUID.fromString(notifyCharacteristicUUID));
         if (bluetoothGattCharacteristicNotify == null) {
+            bleMessageQueue.clear();
             return;
         }
         if (notifyBluetoothGattCharacteristic != null && notifyBluetoothGattCharacteristic.getUuid().equals(bluetoothGattCharacteristicNotify.getUuid())) {
@@ -418,12 +433,14 @@ public class WalleBleService extends Service {
             boolean status = mBluetoothGatt.writeDescriptor(bluetoothGattDescriptor);
             if (!status) {
                 LogUtil.e(TAG, "Change notification status to enable failed");
+                bleMessageQueue.next();
             }
         }
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
                 if (mBluetoothGatt == null) {
+                    bleMessageQueue.clear();
                     return;
                 }
                 BluetoothGattCharacteristic bluetoothGattCharacteristicWrite = mBluetoothGatt.getService(UUID.fromString(writeServiceUUID))
@@ -513,6 +530,7 @@ public class WalleBleService extends Service {
         } else if (!operationDone) {
             broadcastUpdate(ACTION_EXECUTED_FAILED);
             operationDone = true;
+            bleMessageQueue.next();
         }
     }
 
@@ -635,4 +653,15 @@ public class WalleBleService extends Service {
             }
         }
     };
+
+    @Override
+    public void messageQueueRead(String serviceUUID, String characteristicUUID) {
+        readBluetooth(serviceUUID, characteristicUUID);
+    }
+
+    @Override
+    public void messageQueueWrite(String notifyServiceUUID, String notifyCharacteristicUUID, String writeServiceUUID,
+                                  String writeCharacteristicUUID, byte[] content, boolean segmentationContent) {
+        writeBluetooth(notifyServiceUUID, notifyCharacteristicUUID, writeServiceUUID, writeCharacteristicUUID, content, segmentationContent);
+    }
 }

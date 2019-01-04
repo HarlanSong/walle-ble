@@ -2,4 +2,5 @@
 <resources>
     <string name="ble_scan">扫描</string>
     <string name="ble_disconnect">断开</string>
+    <string name="btn_send_cmd">发送命令</string>
 </resources>

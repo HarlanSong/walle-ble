@@ -33,4 +33,21 @@ public class StringUtil {
         }
         return datas;
     }
+
+    /**
+     *  将十六进制字符串转成byte数组,分隔字符
+     * @param content  如 41 54 2b 42 54 53 3f 00
+     * @return
+     */
+    public static byte[] hexToBytes(String content){
+        if(content == null || content.isEmpty()){
+            return null;
+        }
+        String[] array = content.trim().split(" ");
+        byte[] bytes = new byte[array.length];
+        for (int i = 0; i < array.length; i++) {
+            bytes[i] = (byte)Integer.valueOf(array[i],16).intValue();
+        }
+        return bytes;
+    }
 }
