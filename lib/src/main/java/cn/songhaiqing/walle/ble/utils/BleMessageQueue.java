@@ -25,7 +25,7 @@ public class BleMessageQueue {
     }
 
     public synchronized void addTask(String writeServiceUUID, String writeCharacteristicUUID, String notifyServiceUUID,
-                                     String notifyCharacteristicUUID, boolean write, byte[] content) {
+                                     String notifyCharacteristicUUID, boolean write, byte[] content,boolean isSegmentation) {
         BleTaskMessage bleTaskMessage = new BleTaskMessage();
         bleTaskMessage.setWriteServiceUUID(writeServiceUUID);
         bleTaskMessage.setWriteCharacteristicUUID(writeCharacteristicUUID);
@@ -33,6 +33,7 @@ public class BleMessageQueue {
         bleTaskMessage.setNotifyCharacteristicUUID(notifyCharacteristicUUID);
         bleTaskMessage.setWrite(write);
         bleTaskMessage.setContent(content);
+        bleTaskMessage.setSegmentation(isSegmentation);
         if(bleTaskMessages.contains(bleTaskMessage)){
             LogUtil.d(TAG, "添加的重复命令，已跳过");
             return;
@@ -45,17 +46,20 @@ public class BleMessageQueue {
     }
 
     public void execute() {
+        if(bleTaskMessages == null || bleTaskMessages.isEmpty() ){
+            return;
+        }
         isRunning = true;
         LogUtil.d(TAG, "开始发送命令，当前任务数量：" + bleTaskMessages.size());
         BleTaskMessage bleTaskMessage = bleTaskMessages.get(0);
+        bleTaskMessages.remove(0);
         if (bleTaskMessage.isWrite()) {
             bleExecute.messageQueueWrite(bleTaskMessage.getNotifyServiceUUID(), bleTaskMessage.getNotifyCharacteristicUUID(),
                     bleTaskMessage.getWriteServiceUUID(), bleTaskMessage.getWriteCharacteristicUUID(),
-                    bleTaskMessage.getContent(), bleTaskMessage.isSegmentationContent());
+                    bleTaskMessage.getContent(), bleTaskMessage.isSegmentation());
         } else {
             bleExecute.messageQueueRead(bleTaskMessage.getWriteServiceUUID(), bleTaskMessage.getWriteCharacteristicUUID());
         }
-        bleTaskMessages.remove(0);
         executeUpdateTime = System.currentTimeMillis();
         startMessageTask();
     }
@@ -70,14 +74,12 @@ public class BleMessageQueue {
         if (bleTaskMessages.isEmpty()) {
             return;
         }
-        if (bleTaskMessages.isEmpty()) {
-            return;
-        }
         isRunning = true;
         execute();
     }
 
     public void clear() {
+        stopMessageTask();
         bleTaskMessages.clear();
         isRunning = false;
     }

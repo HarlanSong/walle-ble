@@ -129,17 +129,15 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
             } else if (ACTION_READ_BLE.equals(action)) {
                 String serviceUUID = intent.getStringExtra(EXTRA_DATA_READ_SERVICE_UUID);
                 String characteristicUUID = intent.getStringExtra(EXTRA_DATA_READ_CHARACTERISTIC_UUID);
-                // readBluetooth(serviceUUID, characteristicUUID);
-                bleMessageQueue.addTask(serviceUUID, characteristicUUID, null, null, false, null);
+                bleMessageQueue.addTask(serviceUUID, characteristicUUID, null, null, false, null,true);
             } else if (ACTION_WRITE_BLE.equals(action)) {
                 String notifyServiceUUID = intent.getStringExtra(EXTRA_DATA_NOTIFY_SERVICE_UUID);
                 String notifyCharacteristicUUID = intent.getStringExtra(EXTRA_DATA_NOTIFY_CHARACTERISTIC_UUID);
                 String writeServiceUUID = intent.getStringExtra(EXTRA_DATA_WRITE_SERVICE_UUID);
                 String writeCharacteristicUUID = intent.getStringExtra(EXTRA_DATA_WRITE_CHARACTERISTIC_UUID);
-                boolean segmentationContent = intent.getBooleanExtra(EXTRA_DATA_WRITE_SEGMENTATION, true);
+                boolean isSegmentation = intent.getBooleanExtra(EXTRA_DATA_WRITE_SEGMENTATION, false);
                 byte[] data = intent.getByteArrayExtra(EXTRA_DATA);
-                bleMessageQueue.addTask(writeServiceUUID, writeCharacteristicUUID, notifyServiceUUID, notifyCharacteristicUUID, true, data);
-                // writeBluetooth(notifyServiceUUID, notifyCharacteristicUUID, writeServiceUUID, writeCharacteristicUUID, data, segmentationContent);
+                bleMessageQueue.addTask(writeServiceUUID, writeCharacteristicUUID, notifyServiceUUID, notifyCharacteristicUUID, true, data, isSegmentation);
             } else if (ACTION_START_SCAN.equals(action)) {
                 startScan(false);
             } else if (ACTION_STOP_SCAN.equals(action)) {
@@ -174,6 +172,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
                 BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_NOT_CONNECTED);
                 LogUtil.i(TAG, "设备已断开连接");
                 broadcastUpdate(intentAction);
+                bleMessageQueue.clear();
             }
         }
 
@@ -622,6 +621,9 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
         disconnect();
         close();
         LogUtil.d(TAG, "onDestroy");
+        if(bleMessageQueue != null){
+            bleMessageQueue.clear();
+        }
         super.onDestroy();
     }
 

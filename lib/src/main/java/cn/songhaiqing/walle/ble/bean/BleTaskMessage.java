@@ -12,7 +12,7 @@ public class BleTaskMessage {
     private String notifyServiceUUID;
     private String notifyCharacteristicUUID;
     private boolean write; // write or read
-    private boolean segmentationContent;
+    private boolean segmentation;
     private byte[] content;
 
     public String getWriteServiceUUID() {
@@ -63,12 +63,12 @@ public class BleTaskMessage {
         this.content = content;
     }
 
-    public boolean isSegmentationContent() {
-        return segmentationContent;
+    public boolean isSegmentation() {
+        return segmentation;
     }
 
-    public void setSegmentationContent(boolean segmentationContent) {
-        this.segmentationContent = segmentationContent;
+    public void setSegmentation(boolean segmentation) {
+        this.segmentation = segmentation;
     }
 
     @Override
@@ -77,7 +77,7 @@ public class BleTaskMessage {
         if (o == null || getClass() != o.getClass()) return false;
         BleTaskMessage that = (BleTaskMessage) o;
         return write == that.write &&
-                segmentationContent == that.segmentationContent &&
+                segmentation == that.segmentation &&
                 Objects.equals(writeServiceUUID, that.writeServiceUUID) &&
                 Objects.equals(writeCharacteristicUUID, that.writeCharacteristicUUID) &&
                 Objects.equals(notifyServiceUUID, that.notifyServiceUUID) &&
@@ -87,8 +87,7 @@ public class BleTaskMessage {
 
     @Override
     public int hashCode() {
-
-        int result = Objects.hash(writeServiceUUID, writeCharacteristicUUID, notifyServiceUUID, notifyCharacteristicUUID, write, segmentationContent);
+        int result = Objects.hash(writeServiceUUID, writeCharacteristicUUID, notifyServiceUUID, notifyCharacteristicUUID, write, segmentation);
         result = 31 * result + Arrays.hashCode(content);
         return result;
     }
