@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+
 import cn.songhaiqing.walle.ble.bean.BleTaskMessage;
 
 /**
@@ -25,7 +26,7 @@ public class BleMessageQueue {
     }
 
     public synchronized void addTask(String writeServiceUUID, String writeCharacteristicUUID, String notifyServiceUUID,
-                                     String notifyCharacteristicUUID, boolean write, byte[] content,boolean isSegmentation) {
+                                     String notifyCharacteristicUUID, boolean write, byte[] content, boolean isSegmentation) {
         BleTaskMessage bleTaskMessage = new BleTaskMessage();
         bleTaskMessage.setWriteServiceUUID(writeServiceUUID);
         bleTaskMessage.setWriteCharacteristicUUID(writeCharacteristicUUID);
@@ -34,19 +35,20 @@ public class BleMessageQueue {
         bleTaskMessage.setWrite(write);
         bleTaskMessage.setContent(content);
         bleTaskMessage.setSegmentation(isSegmentation);
-        if(bleTaskMessages.contains(bleTaskMessage)){
+        if (bleTaskMessages.contains(bleTaskMessage)) {
             LogUtil.d(TAG, "添加的重复命令，已跳过");
             return;
         }
         bleTaskMessages.add(bleTaskMessage);
         LogUtil.d(TAG, "新增命令任务，添加后任务数量：" + bleTaskMessages.size() + " 执行状态：" + isRunning);
         if (!isRunning) {
+            startMessageTask();
             execute();
         }
     }
 
     public void execute() {
-        if(bleTaskMessages == null || bleTaskMessages.isEmpty() ){
+        if (bleTaskMessages == null || bleTaskMessages.isEmpty()) {
             return;
         }
         isRunning = true;
@@ -61,7 +63,7 @@ public class BleMessageQueue {
             bleExecute.messageQueueRead(bleTaskMessage.getWriteServiceUUID(), bleTaskMessage.getWriteCharacteristicUUID());
         }
         executeUpdateTime = System.currentTimeMillis();
-        startMessageTask();
+
     }
 
     /**
@@ -85,32 +87,29 @@ public class BleMessageQueue {
     }
 
     private void startMessageTask() {
-        if (messageTimer == null) {
-            messageTimer = new Timer();
-        }
-        if (messageTimerTask == null) {
-            messageTimerTask = new TimerTask() {
-                @Override
-                public void run() {
-                    if (System.currentTimeMillis() - executeUpdateTime < 2000) {
-                        return;
-                    }
-                    next();
+        stopMessageTask();
+        messageTimer = new Timer();
+        messageTimerTask = new TimerTask() {
+            @Override
+            public void run() {
+                if (System.currentTimeMillis() - executeUpdateTime < 2000) {
+                    return;
                 }
-            };
-        }
+                next();
+            }
+        };
         messageTimer.schedule(messageTimerTask, WalleBleConfig.getBleResultWaitTime(), WalleBleConfig.getBleResultWaitTime());
     }
 
     private void stopMessageTask() {
         if (messageTimerTask != null) {
             messageTimerTask.cancel();
-            messageTimerTask = null;
         }
+        messageTimerTask = null;
         if (messageTimer != null) {
             messageTimer.cancel();
-            messageTimer = null;
         }
+        messageTimer = null;
     }
 
     public void refreshExecuteUpdateTime() {

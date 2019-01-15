@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
 import android.text.TextUtils;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+
 import cn.songhaiqing.walle.ble.utils.BleMessageQueue;
 import cn.songhaiqing.walle.ble.utils.BleUtil;
 import cn.songhaiqing.walle.ble.utils.LogUtil;
@@ -74,6 +76,10 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
     public final static String EXTRA_DATA_WRITE_SEGMENTATION = "EXTRA_DATA_WRITE_SEGMENTATION";
     public final static String EXTRA_DATA_READ_SERVICE_UUID = "EXTRA_DATA_READ_SERVICE_UUID";
     public final static String EXTRA_DATA_READ_CHARACTERISTIC_UUID = "EXTRA_DATA_READ_CHARACTERISTIC_UUID";
+    public final static String EXTRA_DATA_EXECUTION_LEVEL = "EXTRA_DATA_PRIORITY"; // 优先执行执行级别
+    public final static int EXTRA_DATA_EXECUTION_LEVEL_NORMAL = 0; // 优先执行执行级别
+    public final static int EXTRA_DATA_EXECUTION_LEVEL_PRIORITY = 1; // 优先级别
+    public final static int EXTRA_DATA_EXECUTION_LEVEL_PRIORITY_DISCONTINUE = 2; // 优先中止级别
 
     private BluetoothGattCharacteristic notifyBluetoothGattCharacteristic;
     private Timer timer;
@@ -129,7 +135,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
             } else if (ACTION_READ_BLE.equals(action)) {
                 String serviceUUID = intent.getStringExtra(EXTRA_DATA_READ_SERVICE_UUID);
                 String characteristicUUID = intent.getStringExtra(EXTRA_DATA_READ_CHARACTERISTIC_UUID);
-                bleMessageQueue.addTask(serviceUUID, characteristicUUID, null, null, false, null,true);
+                bleMessageQueue.addTask(serviceUUID, characteristicUUID, null, null, false, null, true);
             } else if (ACTION_WRITE_BLE.equals(action)) {
                 String notifyServiceUUID = intent.getStringExtra(EXTRA_DATA_NOTIFY_SERVICE_UUID);
                 String notifyCharacteristicUUID = intent.getStringExtra(EXTRA_DATA_NOTIFY_CHARACTERISTIC_UUID);
@@ -426,7 +432,6 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
             notifyBluetoothGattCharacteristic = null;
         }
         mBluetoothGatt.setCharacteristicNotification(bluetoothGattCharacteristicNotify, true);
-        notifyBluetoothGattCharacteristic = bluetoothGattCharacteristicNotify;
         for (BluetoothGattDescriptor bluetoothGattDescriptor : bluetoothGattCharacteristicNotify.getDescriptors()) {
             bluetoothGattDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             boolean status = mBluetoothGatt.writeDescriptor(bluetoothGattDescriptor);
@@ -435,6 +440,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
                 bleMessageQueue.next();
             }
         }
+        notifyBluetoothGattCharacteristic = bluetoothGattCharacteristicNotify;
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -621,7 +627,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
         disconnect();
         close();
         LogUtil.d(TAG, "onDestroy");
-        if(bleMessageQueue != null){
+        if (bleMessageQueue != null) {
             bleMessageQueue.clear();
         }
         super.onDestroy();

@@ -223,8 +223,8 @@ public class BleUtil {
         context.sendBroadcast(intent);
     }
 
-    public static void stopWalleBleService(Context context){
-        Intent intent = new Intent(context,WalleBleService.class);
+    public static void stopWalleBleService(Context context) {
+        Intent intent = new Intent(context, WalleBleService.class);
         context.stopService(intent);
     }
 }

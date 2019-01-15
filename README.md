@@ -54,7 +54,7 @@ BleUtil.startScan(final Context context)
 BleUtil.stopScan(Context context)
 ```
 
-**添加监听扫描结果广告**
+**添加监听扫描结果广播**
 ```java
 IntentFilter intentFilter = new IntentFilter();
 intentFilter.addAction(WalleBleService.ACTION_SCAN_RESULT);
