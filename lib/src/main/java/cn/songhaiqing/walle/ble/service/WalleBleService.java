@@ -54,6 +54,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
     public final static String ACTION_START_SCAN = "cn.songhaiqing.walle.ble.ACTION_START_SCAN"; // 开始扫描设备
     public final static String ACTION_STOP_SCAN = "cn.songhaiqing.walle.ble.ACTION_STOP_SCAN"; // 结束扫描设备
     public static final String ACTION_DISCONNECT_DEVICE = "cn.songhaiqing.walle.ble.ACTION_DISCONNECT_DEVICE";
+    public static final String ACTION_RESULT_FINISH = "cn.songhaiqing.walle.ble.ACTION_RESULT_FINISH"; // 单条结果返回成功
 
     public final static String ACTION_GATT_DISCONNECTED = "cn.songhaiqing.walle.ble.ACTION_GATT_DISCONNECTED";
     public final static String ACTION_GATT_SERVICES_DISCOVERED = "cn.songhaiqing.walle.ble.ACTION_GATT_SERVICES_DISCOVERED";
@@ -110,6 +111,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
         intentFilter.addAction(ACTION_DISCONNECT_DEVICE);
         intentFilter.addAction(ACTION_START_SCAN);
         intentFilter.addAction(ACTION_STOP_SCAN);
+        intentFilter.addAction(ACTION_RESULT_FINISH);
         registerReceiver(broadcastReceiver, intentFilter);
 
         IntentFilter statusFilter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
@@ -148,6 +150,8 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
                 startScan(false);
             } else if (ACTION_STOP_SCAN.equals(action)) {
                 stopScan();
+            } else if (ACTION_RESULT_FINISH.equals(action)){
+                bleMessageQueue.next();
             }
         }
     };

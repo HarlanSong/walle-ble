@@ -99,7 +99,6 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 ### 断开连接
 
 ```java
-
 BleUtil.disConnect(this);
 ```
 
@@ -168,7 +167,14 @@ getConnectStatus(Context context)
 BleUtil.bleAddress
 
 // 已连接设备名称
+
 BleUtil.bleName
+```
+
+### 一个命令返回结果全部接收完成调用
+立即执行下一个命令，如不主执行该方法则只能等待超时后执行下一个命令（超时）
+```java
+BleUtil.finishResult(Context context);
 ```
 
 ### WalleBleConfig配置 

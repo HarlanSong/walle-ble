@@ -35,6 +35,7 @@ public class BleMessageQueue {
         bleTaskMessage.setWrite(write);
         bleTaskMessage.setContent(content);
         bleTaskMessage.setSegmentation(isSegmentation);
+        LogUtil.d(TAG, "添加新命令：" + StringUtil.bytesToHexStr(content));
         if (bleTaskMessages.contains(bleTaskMessage)) {
             LogUtil.d(TAG, "添加的重复命令，已跳过");
             return;
@@ -42,13 +43,13 @@ public class BleMessageQueue {
         bleTaskMessages.add(bleTaskMessage);
         LogUtil.d(TAG, "新增命令任务，添加后任务数量：" + bleTaskMessages.size() + " 执行状态：" + isRunning);
         if (!isRunning) {
-            startMessageTask();
             execute();
         }
     }
 
-    public void execute() {
+    private synchronized void execute() {
         if (bleTaskMessages == null || bleTaskMessages.isEmpty()) {
+            stopMessageTask();
             return;
         }
         isRunning = true;
@@ -63,13 +64,13 @@ public class BleMessageQueue {
             bleExecute.messageQueueRead(bleTaskMessage.getWriteServiceUUID(), bleTaskMessage.getWriteCharacteristicUUID());
         }
         executeUpdateTime = System.currentTimeMillis();
-
+        startMessageTask();
     }
 
     /**
      * 已结束一个任务，进入下一个命令发送，如任务为空则结束
      */
-    public void next() {
+    public synchronized void next() {
         isRunning = false;
         LogUtil.d(TAG, "next");
         stopMessageTask();

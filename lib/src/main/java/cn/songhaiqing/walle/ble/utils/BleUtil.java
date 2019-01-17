@@ -227,4 +227,12 @@ public class BleUtil {
         Intent intent = new Intent(context, WalleBleService.class);
         context.stopService(intent);
     }
+
+    /**
+     * 成功返回结果，立即执行下一个命令。如不主执行该方法则只能等待超时后执行下一个命令
+     * @param context
+     */
+    public static void finishResult(Context context) {
+        context.sendBroadcast(new Intent(WalleBleService.ACTION_RESULT_FINISH));
+    }
 }
