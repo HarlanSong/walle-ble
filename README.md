@@ -1,44 +1,30 @@
 [![](https://jitpack.io/v/HarlanSong/walle-ble.svg)](https://jitpack.io/#HarlanSong/walle-ble)
 
-# walle-ble
- 低功耗蓝牙辅助库
+ walle-ble is Android Bluetooth Low Energy tool. (walle-ble是低安卓功耗蓝牙工具) 
 
-## 功能及特点
-* 简化蓝牙连接及操作
+## Function & Features (功能及特点)
+* Simplify bluetooth connection and operation.(简化蓝牙连接及操作)
+* Scanning equipment function.(扫描设备功能)
+* Supports multiple bluetooth solutions.(支持多种蓝牙方案)
+* Support for command queue execution.(支持命令队列执行)
 
-* 无其他依赖
+## Bluetooth low energy flow (低功耗蓝牙流程图)
 
-* 自带搜索界面
-
-* 兼容不同蓝牙方案
-
-* 命令队列
-
-## 流程图
-```flow
-st=>start: Start
-e=>end
-func=>operation: Funcation1
-cmdHelper=>operation: CMD Helper
-bleTool=>operation: walle-ble
-parse=>operation: Parse Helper
-st->func->cmdHelper->bleTool->parse->e
-```
+ ![img](https://github.com/HarlanSong/walle-ble/blob/master/images/BluetoothLowEnergyFlow.png)
 
 
-## 使用
-**repositories中添加源**
+## Configuration (配置)
+**repositories**
 ```groovy
 maven { url "https://jitpack.io" }
 ```
 
-**Gradle 引入库**
+**Gradle**
 ```groovy
-implementation 'com.github.HarlanSong:walle-ble:1.0.15'
+implementation 'com.github.HarlanSong:walle-ble:1.0.13'
 ```
 
-**添加权限**
-
+**Add permission (添加权限)**
 ```xml
 <uses-permission android:name="android.permission.BLUETOOTH" />
 <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -46,8 +32,8 @@ implementation 'com.github.HarlanSong:walle-ble:1.0.15'
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 ```
 
-## 文档
-### 打开扫描界面
+## Document (文档)
+### Scanning page (打开扫描界面)
 
  ![img](https://github.com/HarlanSong/walle-ble/blob/master/images/ScanDevice.jpg)
 
@@ -55,24 +41,37 @@ implementation 'com.github.HarlanSong:walle-ble:1.0.15'
 Intent intent = new Intent(this, DeviceScanActivity.class);
 startActivityForResult(intent, REQUEST_BIND_DEVICE);
 ```
-*REQUEST_BIND_DEVICE 自行定义回调常量（int）*
-
-### 或者自这义界面
-
-利用监听广播实现结果展示
+*REQUEST_BIND_DEVICE 自定义回调常量（int）*
 
 
-**开始扫描设备**
+### 选择蓝牙设置成功回调,并连接设备
+
+```java
+@Override
+protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+	super.onActivityResult(requestCode, resultCode, data);
+	if (resultCode != RESULT_OK && REQUEST_BIND_DEVICE == requestCode) {
+		String name = data.getStringExtra("name");
+		String macAddress = data.getStringExtra("macAddress");
+		Toast.makeText(this, "name:" + name + " macAddress:" + macAddress, Toast.LENGTH_LONG).show();
+		BleUtil.connectDevice(this, name, macAddress);
+	}
+}
+```
+
+### Custom scan page. (自定义扫描界面)
+
+**Start scan(开始扫描)**
 ```java
 BleUtil.startScan(final Context context)
 ```
 
-*停止扫描设备**
+*Stop scan (停止扫描)**
 ```java
 BleUtil.stopScan(Context context)
 ```
 
-**添加监听扫描结果广播**
+**Add results to listen for broadcasts (添加结果监听广播)**
 ```java
 IntentFilter intentFilter = new IntentFilter();
 intentFilter.addAction(WalleBleService.ACTION_SCAN_RESULT);
@@ -80,7 +79,7 @@ intentFilter.addAction(WalleBleService.ACTION_SCAN_TIMEOUT);
 registerReceiver(scanResultBroadcastReceiver, intentFilter);
 ```
 
-**收听结果示例**
+**Example results (结果示例)**
 ```java
 BroadcastReceiver scanResultBroadcastReceiver = new BroadcastReceiver() {
     @Override
@@ -99,20 +98,7 @@ BroadcastReceiver scanResultBroadcastReceiver = new BroadcastReceiver() {
 };
 ```
 
-### 选择蓝牙设置成功回调,并连接设备
 
-```java
-@Override
-protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-	super.onActivityResult(requestCode, resultCode, data);
-	if (resultCode != RESULT_OK && REQUEST_BIND_DEVICE == requestCode) {
-		String name = data.getStringExtra("name");
-		String macAddress = data.getStringExtra("macAddress");
-		Toast.makeText(this, "name:" + name + " macAddress:" + macAddress, Toast.LENGTH_LONG).show();
-		BleUtil.connectDevice(this, name, macAddress);
-	}
-}
-```
 
 ### 断开连接
 
