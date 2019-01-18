@@ -1,13 +1,30 @@
 [![](https://jitpack.io/v/HarlanSong/walle-ble.svg)](https://jitpack.io/#HarlanSong/walle-ble)
+
 # walle-ble
  低功耗蓝牙辅助库
 
 ## 功能及特点
 * 简化蓝牙连接及操作
+
 * 无其他依赖
+
 * 自带搜索界面
+
 * 兼容不同蓝牙方案
+
 * 命令队列
+
+## 流程图
+```flow
+st=>start: Start
+e=>end
+func=>operation: Funcation1
+cmdHelper=>operation: CMD Helper
+bleTool=>operation: walle-ble
+parse=>operation: Parse Helper
+st->func->cmdHelper->bleTool->parse->e
+```
+
 
 ## 使用
 **repositories中添加源**
@@ -17,10 +34,11 @@ maven { url "https://jitpack.io" }
 
 **Gradle 引入库**
 ```groovy
-implementation 'com.github.HarlanSong:walle-ble:1.0.13'
+implementation 'com.github.HarlanSong:walle-ble:1.0.15'
 ```
 
 **添加权限**
+
 ```xml
 <uses-permission android:name="android.permission.BLUETOOTH" />
 <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
