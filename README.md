@@ -1,6 +1,6 @@
 [![](https://jitpack.io/v/HarlanSong/walle-ble.svg)](https://jitpack.io/#HarlanSong/walle-ble)
 
- walle-ble is Android Bluetooth Low Energy tool. (walle-ble是低安卓功耗蓝牙工具) 
+ walle-ble is Android Bluetooth Low Energy tool. (walle-ble是安卓低功耗蓝牙工具) 
 
 ## Function & Features (功能及特点)
 * Simplify bluetooth connection and operation.(简化蓝牙连接及操作)
