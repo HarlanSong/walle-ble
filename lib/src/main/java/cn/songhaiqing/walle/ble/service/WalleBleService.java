@@ -393,14 +393,19 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
             bleMessageQueue.clear();
             return;
         }
+        if(mBluetoothGatt == null){
+            bleMessageQueue.clear();
+            return;
+        }
+
         BluetoothGattService bluetoothGattService = mBluetoothGatt.getService(UUID.fromString(serviceUUID));
         if (bluetoothGattService == null) {
-            bleMessageQueue.next();
+            bleMessageQueue.clear();
             return;
         }
         BluetoothGattCharacteristic bluetoothGattCharacteristic = bluetoothGattService.getCharacteristic(UUID.fromString(characteristicUUID));
         if (bluetoothGattCharacteristic == null) {
-            bleMessageQueue.next();
+            bleMessageQueue.clear();
             return;
         }
         readCharacteristic(bluetoothGattCharacteristic, 0);

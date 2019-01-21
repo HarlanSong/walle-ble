@@ -83,6 +83,7 @@ public class BleUtil {
         context.stopService(intent);
     }
 
+    @Deprecated
     public static void broadcastReadBle(Context context, byte[] bytes, String serviceUUID,
                                         String characteristicUUID) {
         if (getConnectStatus(context) != CONNECT_STATUS_SUCCESS) {
@@ -92,6 +93,17 @@ public class BleUtil {
         intent.putExtra(WalleBleService.EXTRA_DATA_READ_SERVICE_UUID, serviceUUID);
         intent.putExtra(WalleBleService.EXTRA_DATA_READ_CHARACTERISTIC_UUID, characteristicUUID);
         intent.putExtra(WalleBleService.EXTRA_DATA, bytes);
+        context.sendBroadcast(intent);
+    }
+
+    public static void readBle(Context context,String serviceUUID,
+                                        String characteristicUUID) {
+        if (getConnectStatus(context) != CONNECT_STATUS_SUCCESS) {
+            return;
+        }
+        Intent intent = new Intent(WalleBleService.ACTION_READ_BLE);
+        intent.putExtra(WalleBleService.EXTRA_DATA_READ_SERVICE_UUID, serviceUUID);
+        intent.putExtra(WalleBleService.EXTRA_DATA_READ_CHARACTERISTIC_UUID, characteristicUUID);
         context.sendBroadcast(intent);
     }
 

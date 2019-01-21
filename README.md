@@ -21,7 +21,7 @@ maven { url "https://jitpack.io" }
 
 **Gradle**
 ```groovy
-implementation 'com.github.HarlanSong:walle-ble:1.0.13'
+implementation 'com.github.HarlanSong:walle-ble:1.0.15'
 ```
 
 **Add permission (添加权限)**
@@ -50,7 +50,7 @@ startActivityForResult(intent, REQUEST_BIND_DEVICE);
 @Override
 protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 	super.onActivityResult(requestCode, resultCode, data);
-	if (resultCode != RESULT_OK && REQUEST_BIND_DEVICE == requestCode) {
+	if (resultCode == RESULT_OK && REQUEST_BIND_DEVICE == requestCode) {
 		String name = data.getStringExtra("name");
 		String macAddress = data.getStringExtra("macAddress");
 		Toast.makeText(this, "name:" + name + " macAddress:" + macAddress, Toast.LENGTH_LONG).show();
@@ -130,7 +130,7 @@ BleUtil.disConnect(this);
 * ACTION_GATT_DISCONNECTED 断开连接
 * ACTION_DEVICE_RESULT 设备有数据返回，`uuid`为返回特征值UUID;`data`为解析后的数组。`srcData`为原数据；
 
-### 发送命令到设备，并监听
+### 写入命令
 
 ```java
   BleUtil.broadcastWriteBle(Context context, String notifyServiceUUID,
@@ -144,10 +144,10 @@ BleUtil.disConnect(this);
 *  writeCharacteristicUUID 写入特殊值UUID
 *  bytes 命令内容
 
-### 仅读取取设备数据
+### 读取数据
 
 ```java
-BleUtil.broadcastReadBle(Context context, byte[] bytes, String serviceUUID,String characteristicUUID);
+BleUtil.readBle(Context context, String serviceUUID, String characteristicUUID);
 ```
 
 *  context 上下文
