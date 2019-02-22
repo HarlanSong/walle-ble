@@ -136,6 +136,15 @@ public class BleUtil {
                 writeCharacteristicUUID, bytes, segmentation, false);
     }
 
+    public static void broadcastWriteBle(Context context, String notifyServiceUUID,
+                                         String notifyCharacteristicUUID, String writeServiceUUID,
+                                         String writeCharacteristicUUID, byte[] bytes, boolean segmentation,
+                                         boolean immediately) {
+
+        writeBle(context, notifyServiceUUID, notifyCharacteristicUUID, writeServiceUUID,
+                writeCharacteristicUUID, bytes, segmentation, immediately);
+    }
+
     /**
      * 发送写入命令
      *
