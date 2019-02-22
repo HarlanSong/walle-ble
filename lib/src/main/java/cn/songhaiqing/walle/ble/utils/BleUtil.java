@@ -113,7 +113,8 @@ public class BleUtil {
         if (getConnectStatus(context) != CONNECT_STATUS_SUCCESS) {
             return;
         }
-        broadcastWriteBle(context, notifyServiceUUID, notifyCharacteristicUUID, writeServiceUUID, writeCharacteristicUUID, bytes, true);
+        writeBle(context, notifyServiceUUID, notifyCharacteristicUUID, writeServiceUUID,
+                writeCharacteristicUUID, bytes, true, false);
     }
 
     /**
@@ -130,6 +131,27 @@ public class BleUtil {
     public static void broadcastWriteBle(Context context, String notifyServiceUUID,
                                          String notifyCharacteristicUUID, String writeServiceUUID,
                                          String writeCharacteristicUUID, byte[] bytes, boolean segmentation) {
+
+        writeBle(context, notifyServiceUUID, notifyCharacteristicUUID, writeServiceUUID,
+                writeCharacteristicUUID, bytes, segmentation, false);
+    }
+
+    /**
+     * 发送写入命令
+     *
+     * @param context
+     * @param notifyServiceUUID        订阅服务UUID
+     * @param notifyCharacteristicUUID 订阅特征UUID
+     * @param writeServiceUUID         写入服务UUID
+     * @param writeCharacteristicUUID  写入特征UUID
+     * @param bytes                    命令内容
+     * @param segmentation             是否分包发送，true  以最多20个字节会包发送
+     * @param immediately             是否立即执行，默认false
+     */
+    private static void writeBle(Context context, String notifyServiceUUID,
+                                         String notifyCharacteristicUUID, String writeServiceUUID,
+                                         String writeCharacteristicUUID, byte[] bytes, boolean segmentation,
+                                         boolean immediately) {
         if (getConnectStatus(context) != CONNECT_STATUS_SUCCESS) {
             return;
         }
@@ -140,6 +162,7 @@ public class BleUtil {
         intent.putExtra(WalleBleService.EXTRA_DATA_WRITE_CHARACTERISTIC_UUID, writeCharacteristicUUID);
         intent.putExtra(WalleBleService.EXTRA_DATA, bytes);
         intent.putExtra(WalleBleService.EXTRA_DATA_WRITE_SEGMENTATION, segmentation);
+        intent.putExtra(WalleBleService.EXTRA_DATA_IMMEDIATELY, immediately);
         context.sendBroadcast(intent);
     }
 

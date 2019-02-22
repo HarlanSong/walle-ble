@@ -19,7 +19,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.IBinder;
 import android.text.TextUtils;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +26,6 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
-
 import cn.songhaiqing.walle.ble.utils.BleMessageQueue;
 import cn.songhaiqing.walle.ble.utils.BleUtil;
 import cn.songhaiqing.walle.ble.utils.LogUtil;
@@ -77,10 +75,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
     public final static String EXTRA_DATA_WRITE_SEGMENTATION = "EXTRA_DATA_WRITE_SEGMENTATION";
     public final static String EXTRA_DATA_READ_SERVICE_UUID = "EXTRA_DATA_READ_SERVICE_UUID";
     public final static String EXTRA_DATA_READ_CHARACTERISTIC_UUID = "EXTRA_DATA_READ_CHARACTERISTIC_UUID";
-    public final static String EXTRA_DATA_EXECUTION_LEVEL = "EXTRA_DATA_PRIORITY"; // 优先执行执行级别
-    public final static int EXTRA_DATA_EXECUTION_LEVEL_NORMAL = 0; // 优先执行执行级别
-    public final static int EXTRA_DATA_EXECUTION_LEVEL_PRIORITY = 1; // 优先级别
-    public final static int EXTRA_DATA_EXECUTION_LEVEL_PRIORITY_DISCONTINUE = 2; // 优先中止级别
+    public final static String EXTRA_DATA_IMMEDIATELY = "EXTRA_DATA_IMMEDIATELY";
 
     private BluetoothGattCharacteristic notifyBluetoothGattCharacteristic;
     private Timer timer;
@@ -137,7 +132,9 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
             } else if (ACTION_READ_BLE.equals(action)) {
                 String serviceUUID = intent.getStringExtra(EXTRA_DATA_READ_SERVICE_UUID);
                 String characteristicUUID = intent.getStringExtra(EXTRA_DATA_READ_CHARACTERISTIC_UUID);
-                bleMessageQueue.addTask(serviceUUID, characteristicUUID, null, null, false, null, true);
+                boolean immediately = intent.getBooleanExtra(EXTRA_DATA_IMMEDIATELY, false);
+                bleMessageQueue.addTask(serviceUUID, characteristicUUID, null,
+                        null, false, null, true, immediately);
             } else if (ACTION_WRITE_BLE.equals(action)) {
                 String notifyServiceUUID = intent.getStringExtra(EXTRA_DATA_NOTIFY_SERVICE_UUID);
                 String notifyCharacteristicUUID = intent.getStringExtra(EXTRA_DATA_NOTIFY_CHARACTERISTIC_UUID);
@@ -145,12 +142,14 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
                 String writeCharacteristicUUID = intent.getStringExtra(EXTRA_DATA_WRITE_CHARACTERISTIC_UUID);
                 boolean isSegmentation = intent.getBooleanExtra(EXTRA_DATA_WRITE_SEGMENTATION, false);
                 byte[] data = intent.getByteArrayExtra(EXTRA_DATA);
-                bleMessageQueue.addTask(writeServiceUUID, writeCharacteristicUUID, notifyServiceUUID, notifyCharacteristicUUID, true, data, isSegmentation);
+                boolean immediately = intent.getBooleanExtra(EXTRA_DATA_IMMEDIATELY, false);
+                bleMessageQueue.addTask(writeServiceUUID, writeCharacteristicUUID, notifyServiceUUID,
+                        notifyCharacteristicUUID, true, data, isSegmentation, immediately);
             } else if (ACTION_START_SCAN.equals(action)) {
                 startScan(false);
             } else if (ACTION_STOP_SCAN.equals(action)) {
                 stopScan();
-            } else if (ACTION_RESULT_FINISH.equals(action)){
+            } else if (ACTION_RESULT_FINISH.equals(action)) {
                 bleMessageQueue.next();
             }
         }
@@ -393,7 +392,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
             bleMessageQueue.clear();
             return;
         }
-        if(mBluetoothGatt == null){
+        if (mBluetoothGatt == null) {
             bleMessageQueue.clear();
             return;
         }

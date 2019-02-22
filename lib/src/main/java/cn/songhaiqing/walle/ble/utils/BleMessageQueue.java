@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import cn.songhaiqing.walle.ble.bean.BleTaskMessage;
 
 /**
@@ -25,8 +24,9 @@ public class BleMessageQueue {
         isRunning = false;
     }
 
-    public synchronized void addTask(String writeServiceUUID, String writeCharacteristicUUID, String notifyServiceUUID,
-                                     String notifyCharacteristicUUID, boolean write, byte[] content, boolean isSegmentation) {
+    public synchronized void addTask(String writeServiceUUID, String writeCharacteristicUUID,
+                                     String notifyServiceUUID, String notifyCharacteristicUUID,
+                                     boolean write, byte[] content, boolean isSegmentation, boolean immediately) {
         BleTaskMessage bleTaskMessage = new BleTaskMessage();
         bleTaskMessage.setWriteServiceUUID(writeServiceUUID);
         bleTaskMessage.setWriteCharacteristicUUID(writeCharacteristicUUID);
@@ -35,15 +35,19 @@ public class BleMessageQueue {
         bleTaskMessage.setWrite(write);
         bleTaskMessage.setContent(content);
         bleTaskMessage.setSegmentation(isSegmentation);
-        LogUtil.d(TAG, "添加新命令：" + StringUtil.bytesToHexStr(content));
+        LogUtil.d(TAG, "添加新命令：" + StringUtil.bytesToHexStr(content) + "添加后任务数量：" + bleTaskMessages.size() + " 执行状态：" + isRunning);
         if (bleTaskMessages.contains(bleTaskMessage)) {
             LogUtil.d(TAG, "添加的重复命令，已跳过");
             return;
         }
-        bleTaskMessages.add(bleTaskMessage);
-        LogUtil.d(TAG, "新增命令任务，添加后任务数量：" + bleTaskMessages.size() + " 执行状态：" + isRunning);
-        if (!isRunning) {
+        if(immediately){
+            bleTaskMessages.add(0, bleTaskMessage);
             execute();
+        } else {
+            bleTaskMessages.add(bleTaskMessage);
+            if (!isRunning) {
+                execute();
+            }
         }
     }
 
