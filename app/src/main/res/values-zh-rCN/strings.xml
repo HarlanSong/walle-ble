@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">walle-ble DEMO</string>
     <string name="ble_scan">扫描</string>
     <string name="ble_disconnect">断开</string>
     <string name="btn_send_cmd">发送命令</string>
+    <string name="device_not_connected">设备未连接</string>
+    <string name="device_status_connecting">连接中</string>
+    <string name="device_status_connected">已连接</string>
+    <string name="device_status_connection_fail">连接失败</string>
+    <string name="clear">清空</string>
 </resources>

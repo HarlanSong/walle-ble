@@ -1,6 +1,11 @@
 <resources>
-    <string name="app_name">walle-ble</string>
+    <string name="app_name">walle-ble DEMO</string>
     <string name="ble_scan">Scan</string>
     <string name="ble_disconnect">Disconnect</string>
     <string name="btn_send_cmd">Send CMD</string>
+    <string name="device_not_connected">Device not connected</string>
+    <string name="device_status_connecting">Connecting</string>
+    <string name="device_status_connected">Connected</string>
+    <string name="device_status_connection_fail">Connection fail</string>
+    <string name="clear">Clear</string>
 </resources>

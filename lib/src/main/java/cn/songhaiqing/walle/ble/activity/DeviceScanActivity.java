@@ -23,10 +23,12 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
 import cn.songhaiqing.walle.ble.R;
 import cn.songhaiqing.walle.ble.bean.BluetoothDeviceEntity;
 import cn.songhaiqing.walle.ble.service.WalleBleService;
@@ -45,15 +47,15 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
     private Button btnOption;
     private TextView tvTitle;
     private ProgressBar pbLoad;
-
     private List<BluetoothDeviceEntity> bluetoothDeviceEntityList;
+    private boolean showSignalStrength; // 信号强度
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             Window window = getWindow();
-            // Translucent status bar
             window.setFlags(
                     WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS,
                     WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
@@ -66,6 +68,8 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
         pbLoad = findViewById(R.id.pb_load);
 
         String title = getIntent().getStringExtra("title");
+        showSignalStrength = getIntent().getBooleanExtra("showSignalStrength", true);
+
         if (TextUtils.isEmpty(title)) {
             title = getString(R.string.walle_ble_bind_device);
         }
@@ -213,7 +217,12 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
                 name.append(R.string.walle_ble_unknown_device);
             viewHolder.tvName.setText(name.toString());
             viewHolder.tvMacAddress.setText(device.getAddress());
-            viewHolder.tvRssi.setText(String.valueOf(device.getRssi()));
+            if (showSignalStrength) {
+                viewHolder.tvRssi.setVisibility(View.VISIBLE);
+                viewHolder.tvRssi.setText(String.valueOf(device.getRssi()));
+            } else {
+                viewHolder.tvRssi.setVisibility(View.GONE);
+            }
             return view;
         }
     }

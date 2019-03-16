@@ -78,7 +78,7 @@ public class BleUtil {
     }
 
     public static void disConnect(Context context) {
-        context.sendBroadcast(new Intent(WalleBleService.ACTION_GATT_DISCONNECTED));
+        context.sendBroadcast(new Intent(WalleBleService.ACTION_DISCONNECT_DEVICE));
         Intent intent = new Intent(context, WalleBleService.class);
         context.stopService(intent);
     }
