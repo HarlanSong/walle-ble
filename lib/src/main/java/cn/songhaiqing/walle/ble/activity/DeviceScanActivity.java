@@ -49,11 +49,14 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
     private ProgressBar pbLoad;
     private List<BluetoothDeviceEntity> bluetoothDeviceEntityList;
     private boolean showSignalStrength; // 信号强度
+    private String[] scanFilterName ;
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             Window window = getWindow();
             window.setFlags(
@@ -69,6 +72,7 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
 
         String title = getIntent().getStringExtra("title");
         showSignalStrength = getIntent().getBooleanExtra("showSignalStrength", true);
+        scanFilterName = getIntent().getStringArrayExtra("scanFilterName");
 
         if (TextUtils.isEmpty(title)) {
             title = getString(R.string.walle_ble_bind_device);
@@ -97,7 +101,7 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
         bluetoothDeviceEntityList.clear();
         mLeDeviceListAdapter.notifyDataSetChanged();
         if (validPermission()) {
-            BleUtil.startScan(this);
+            BleUtil.startScan(this, scanFilterName);
             mScanning = true;
             refreshOptionStatus();
         }
@@ -126,7 +130,7 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_COARSE_LOCATION && grantResults.length > 0) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                BleUtil.startScan(this);
+                BleUtil.startScan(this, scanFilterName);
             } else {
                 finish();
             }
@@ -143,6 +147,7 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+        BleUtil.stopScan(this);
         BluetoothDeviceEntity bluetoothDeviceEntity = bluetoothDeviceEntityList.get(position);
         Intent intent = getIntent();
         intent.putExtra("name", bluetoothDeviceEntity.getName());
@@ -156,7 +161,7 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
         int i = view.getId();
         if (i == R.id.btn_option) {
             if (!mScanning) {
-                BleUtil.startScan(this);
+                BleUtil.startScan(this,scanFilterName);
                 bluetoothDeviceEntityList.clear();
                 mLeDeviceListAdapter.notifyDataSetChanged();
             } else {

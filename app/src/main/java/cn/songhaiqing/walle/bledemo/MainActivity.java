@@ -90,6 +90,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (WalleBleService.ACTION_CONNECTED_SUCCESS.equals(action)) {
                 addLog("连接成功");
                 loadStatusInfo();
+                final String AT_SERVICE_UUID = "0000ffa0-0000-1000-8000-00805f9b34fb";
+                final String AT_CHARACTERISTIC_WRITE_UUID = "0000ffa1-0000-1000-8000-00805f9b34fb";
+                final String AT_CHARACTERISTIC_NOTIFY_UUID = "0000ffa2-0000-1000-8000-00805f9b34fb";
+                byte[] bytes1 = StringUtil.hexToBytes("41 54 2b 42 54 53 3f 00");
+                byte[] bytes2 = StringUtil.hexToBytes("41 54 2b 47 53 56 3f 00");
+                BleUtil.broadcastWriteBle(getBaseContext(), AT_SERVICE_UUID, AT_CHARACTERISTIC_NOTIFY_UUID, AT_SERVICE_UUID, AT_CHARACTERISTIC_WRITE_UUID, bytes1);
+                BleUtil.broadcastWriteBle(getBaseContext(), AT_SERVICE_UUID, AT_CHARACTERISTIC_NOTIFY_UUID, AT_SERVICE_UUID, AT_CHARACTERISTIC_WRITE_UUID, bytes2);
             } else if (WalleBleService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 loadStatusInfo();
                 addLog("断开连接");
@@ -138,8 +145,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         final int id = view.getId();
         switch (id) {
             case R.id.btn_scan:
+                String[] scanFilterName = {"WP810"};
                 Intent intent = new Intent(this, DeviceScanActivity.class);
                 intent.putExtra("showSignalStrength", false);
+                intent.putExtra("scanFilterName", scanFilterName);
                 startActivityForResult(intent, REQUEST_BIND_DEVICE);
                 break;
             case R.id.btn_disconnect:
@@ -161,8 +170,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         final String AT_SERVICE_UUID = "0000ffa0-0000-1000-8000-00805f9b34fb";
         final String AT_CHARACTERISTIC_WRITE_UUID = "0000ffa1-0000-1000-8000-00805f9b34fb";
         final String AT_CHARACTERISTIC_NOTIFY_UUID = "0000ffa2-0000-1000-8000-00805f9b34fb";
-        byte[] bytes1 = StringUtil.hexToBytes("41 54 2b 53 44 54 3a 31 39 30 31 31 37 31 31 31 31 30 33 00");
-        byte[] bytes2 = StringUtil.hexToBytes("41 54 2b 42 54 53 3f 00");
+        byte[] bytes1 = StringUtil.hexToBytes("41 54 2b 42 54 53 3f 00");
+        byte[] bytes2 = StringUtil.hexToBytes("41 54 2b 47 53 56 3f 00");
         byte[] bytes3 = StringUtil.hexToBytes("41 54 2b 47 53 56 3f 00");
         BleUtil.broadcastWriteBle(this, AT_SERVICE_UUID, AT_CHARACTERISTIC_NOTIFY_UUID, AT_SERVICE_UUID, AT_CHARACTERISTIC_WRITE_UUID, bytes1);
         BleUtil.broadcastWriteBle(this, AT_SERVICE_UUID, AT_CHARACTERISTIC_NOTIFY_UUID, AT_SERVICE_UUID, AT_CHARACTERISTIC_WRITE_UUID, bytes2);

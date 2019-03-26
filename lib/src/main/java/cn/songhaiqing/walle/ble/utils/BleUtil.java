@@ -235,6 +235,10 @@ public class BleUtil {
      * @param context
      */
     public static void startScan(final Context context) {
+        startScan(context, null);
+    }
+
+    public static void startScan(final Context context, final String[] scanFilterName) {
         if (!ToolUtil.isServiceRunning(WalleBleService.class.getName(), context)) {
             Intent intent = new Intent(context, WalleBleService.class);
             context.startService(intent);
@@ -248,11 +252,17 @@ public class BleUtil {
                         LogUtil.e("BleUtil", e.getMessage());
                     }
                     Intent intent = new Intent(WalleBleService.ACTION_START_SCAN);
+                    if(scanFilterName != null) {
+                        intent.putExtra("scanFilterName", scanFilterName);
+                    }
                     context.sendBroadcast(intent);
                 }
             }.start();
         } else {
             Intent intent = new Intent(WalleBleService.ACTION_START_SCAN);
+            if(scanFilterName != null) {
+                intent.putExtra("scanFilterName", scanFilterName);
+            }
             context.sendBroadcast(intent);
         }
     }

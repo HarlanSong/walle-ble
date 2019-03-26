@@ -4,9 +4,9 @@ package cn.songhaiqing.walle.ble.utils;
 public class WalleBleConfig {
     private static boolean debug = false;
     private static String LOG_TAG = "WalleBle ";
-    private static int segmentationSleepTime = 2000;
+    private static int segmentationSleepTime = 500;
     private static boolean segmentationAddIndex = false;
-    private static int bleWriteDelayedTime = 1000;
+    private static int bleWriteDelayedTime = 500;
     private static int retrySleepTime = 1000;
     private static int maxRetryNumber = 3;
     private static int scanBleTimeoutTime = 20000;
@@ -69,9 +69,6 @@ public class WalleBleConfig {
     }
 
     public static void setBleWriteDelayedTime(int bleWriteDelayedTime) {
-        if (bleWriteDelayedTime <= 300) {
-            bleWriteDelayedTime = 300;
-        }
         WalleBleConfig.bleWriteDelayedTime = bleWriteDelayedTime;
     }
 

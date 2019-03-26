@@ -13,6 +13,7 @@ import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -92,8 +93,10 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
     private final int maxLength = 20;
     private long connectTimeTag;
     private Map<String, BluetoothDevice> deviceMap;
+    private String[] scanFilterName;
 
     private BleMessageQueue bleMessageQueue;
+    private BleScanCall bleScanCall;
 
     @Override
     public void onCreate() {
@@ -146,6 +149,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
                 bleMessageQueue.addTask(writeServiceUUID, writeCharacteristicUUID, notifyServiceUUID,
                         notifyCharacteristicUUID, true, data, isSegmentation, immediately);
             } else if (ACTION_START_SCAN.equals(action)) {
+                scanFilterName = intent.getStringArrayExtra("scanFilterName");
                 startScan(false);
             } else if (ACTION_STOP_SCAN.equals(action)) {
                 stopScan();
@@ -161,6 +165,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
             LogUtil.d(TAG, "onConnectionStateChange status:" + status + " newState:" + newState);
             String intentAction;
             if (newState == BluetoothProfile.STATE_CONNECTED) {
+                mBluetoothGatt.discoverServices();
                 intentAction = ACTION_CONNECTED_SUCCESS;
                 mConnectionState = STATE_CONNECTED;
                 String bleName = gatt.getDevice().getName();
@@ -170,9 +175,8 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
                 BleUtil.bleAddress = bleName;
                 stopScan();
                 cancelReconnectTimerTask();
-                sendBroadcast(new Intent(intentAction));
                 BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_SUCCESS);
-                mBluetoothGatt.discoverServices();
+                sendBroadcast(new Intent(intentAction));
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED && status != 133) {
                 intentAction = ACTION_GATT_DISCONNECTED;
                 mConnectionState = STATE_DISCONNECTED;
@@ -568,8 +572,12 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
             LogUtil.w(TAG, "bluetoothLeScanner is null");
             return;
         }
-        bluetoothLeScanner.startScan(scanCallback);
+        bleScanCall = new BleScanCall();
         deviceMap.clear();
+        ScanSettings.Builder builder = new ScanSettings.Builder();
+        builder.setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY);
+        builder.setReportDelay(0);
+        bluetoothLeScanner.startScan(null, builder.build(), bleScanCall);
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -580,34 +588,51 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
     }
 
     private void stopScan() {
-        if (bluetoothLeScanner == null) {
+        if (bluetoothLeScanner == null || bleScanCall == null) {
+            bluetoothLeScanner = null;
+            bleScanCall = null;
             return;
         }
-        bluetoothLeScanner.stopScan(scanCallback);
+        bluetoothLeScanner.stopScan(bleScanCall);
+        bleScanCall = null;
     }
 
-    ScanCallback scanCallback = new ScanCallback() {
+    class BleScanCall extends ScanCallback {
         @Override
         public void onScanResult(int callbackType, ScanResult result) {
             String name = result.getDevice().getName();
             String address = result.getDevice().getAddress();
+            int rssi = result.getRssi();
+            LogUtil.d("ScanResult", "address:" + address + " name:" + name + " rssi:" + rssi);
+            if (name == null || name.isEmpty()) {
+                return;
+            }
+            if(scanFilterName != null){
+                boolean exist = false;
+                for (String nameTag : scanFilterName) {
+                    if(name.contains(nameTag)){
+                        exist = true;
+                        break;
+                    }
+                }
+                if(!exist){
+                    return;
+                }
+            }
+
             deviceMap.put(address, result.getDevice());
             if (isConnectScan && (TextUtils.isEmpty(mBluetoothDeviceAddress) || mBluetoothDeviceAddress.equals(address))) {
                 LogUtil.d(TAG, "扫描到连接地址，并停止扫描。");
                 stopScan();
             }
-            int rssi = result.getRssi();
-            LogUtil.d("ScanResult", "address:" + address + " name:" + name + " rssi:" + rssi);
-            if (name == null || name.length() == 0) {
-                return;
-            }
-            //super.onScanResult(callbackType, result);
 
+            //
             Intent intent = new Intent(ACTION_SCAN_RESULT);
             intent.putExtra("rssi", rssi);
             intent.putExtra("address", address);
             intent.putExtra("name", name);
             sendBroadcast(intent);
+            super.onScanResult(callbackType, result);
         }
 
         @Override
@@ -637,6 +662,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
         LogUtil.d(TAG, "onDestroy");
         if (bleMessageQueue != null) {
             bleMessageQueue.clear();
+            bleMessageQueue =  null;
         }
         super.onDestroy();
     }
