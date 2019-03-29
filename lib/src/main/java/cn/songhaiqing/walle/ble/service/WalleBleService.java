@@ -57,6 +57,8 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
 
     public final static String ACTION_GATT_DISCONNECTED = "cn.songhaiqing.walle.ble.ACTION_GATT_DISCONNECTED";
     public final static String ACTION_GATT_SERVICES_DISCOVERED = "cn.songhaiqing.walle.ble.ACTION_GATT_SERVICES_DISCOVERED";
+    public final static String ACTION_SERVICES_DISCOVERED_DONE = "cn.songhaiqing.walle.ble.ACTION_SERVICES_DISCOVERED_DONE";
+
     public final static String ACTION_CONNECTED_SUCCESS = "cn.songhaiqing.walle.ble.ACTION_CONNECTED_SUCCESS";
     public static final String ACTION_CONNECT_FAIL = "cn.songhaiqing.walle.ble.ACTION_CONNECT_FAIL";
     public static final String ACTION_RECONNECTION = "cn.songhaiqing.walle.ble.ACTION_RECONNECTION";
@@ -192,6 +194,9 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             LogUtil.d(TAG, "onServicesDiscovered status:" + status);
+            if(status == BluetoothGatt.GATT_SUCCESS) {
+                sendBroadcast(new Intent(ACTION_SERVICES_DISCOVERED_DONE));
+            }
         }
 
         @Override
@@ -644,7 +649,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
         public void onScanFailed(int errorCode) {
             super.onScanFailed(errorCode);
         }
-    };
+    }
 
     @Override
     public void onDestroy() {
