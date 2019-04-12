@@ -51,7 +51,18 @@ public class BleUtil {
      * @param context
      * @param address MAC地址
      */
-    public static void connectDevice(final Context context, final String address) {
+    public static void connectDevice(Context context, String address) {
+        connectDevice(context, address, false);
+    }
+
+    /**
+     * 连接设备
+     *
+     * @param context
+     * @param address     MAC 地址
+     * @param autoConnect 是否自动连接，默认为false
+     */
+    public static void connectDevice(final Context context, final String address, final boolean autoConnect) {
         setConnectStatus(CONNECT_STATUS_CONNECTING);
         if (!ToolUtil.isServiceRunning(WalleBleService.class.getName(), context)) {
             Intent intent = new Intent(context, WalleBleService.class);
@@ -67,16 +78,24 @@ public class BleUtil {
                     }
                     Intent intent = new Intent(WalleBleService.ACTION_CONNECT_DEVICE);
                     intent.putExtra(WalleBleService.EXTRA_DATA, address);
+                    intent.putExtra("autoConnect", autoConnect);
                     context.sendBroadcast(intent);
                 }
             }.start();
         } else {
             Intent intent = new Intent(WalleBleService.ACTION_CONNECT_DEVICE);
             intent.putExtra(WalleBleService.EXTRA_DATA, address);
+            intent.putExtra("autoConnect", autoConnect);
             context.sendBroadcast(intent);
         }
     }
 
+
+    /**
+     * 断开连接
+     *
+     * @param context
+     */
     public static void disConnect(Context context) {
         context.sendBroadcast(new Intent(WalleBleService.ACTION_DISCONNECT_DEVICE));
         Intent intent = new Intent(context, WalleBleService.class);
@@ -96,8 +115,14 @@ public class BleUtil {
         context.sendBroadcast(intent);
     }
 
-    public static void readBle(Context context,String serviceUUID,
-                                        String characteristicUUID) {
+    /**
+     * 读取蓝牙设备数据
+     *
+     * @param context
+     * @param serviceUUID        服务UUID
+     * @param characteristicUUID 特征值UUID
+     */
+    public static void readBle(Context context, String serviceUUID, String characteristicUUID) {
         if (getConnectStatus(context) != CONNECT_STATUS_SUCCESS) {
             return;
         }
@@ -107,6 +132,16 @@ public class BleUtil {
         context.sendBroadcast(intent);
     }
 
+    /**
+     * 蓝牙设备写入命令
+     *
+     * @param context
+     * @param notifyServiceUUID        订阅服务UUID
+     * @param notifyCharacteristicUUID 订阅特征值UUID
+     * @param writeServiceUUID         写入服务UUID
+     * @param writeCharacteristicUUID  写入特征值UUID
+     * @param bytes                    写入内容
+     */
     public static void broadcastWriteBle(Context context, String notifyServiceUUID,
                                          String notifyCharacteristicUUID, String writeServiceUUID,
                                          String writeCharacteristicUUID, byte[] bytes) {
@@ -118,7 +153,7 @@ public class BleUtil {
     }
 
     /**
-     * 发送写入命令
+     * 蓝牙设备写入命令
      *
      * @param context
      * @param notifyServiceUUID        订阅服务UUID
@@ -136,6 +171,18 @@ public class BleUtil {
                 writeCharacteristicUUID, bytes, segmentation, false);
     }
 
+    /**
+     * 蓝牙设备写入命令
+     *
+     * @param context
+     * @param notifyServiceUUID        订阅服务UUID
+     * @param notifyCharacteristicUUID 订阅特征UUID
+     * @param writeServiceUUID         写入服务UUID
+     * @param writeCharacteristicUUID  写入特征UUID
+     * @param bytes                    命令内容
+     * @param segmentation             是否分包发送，true  以最多20个字节会包发送
+     * @param immediately              是否立即发送（因命令有队列机制，需要优选执行，如：测量终止测量手环心率等场景）
+     */
     public static void broadcastWriteBle(Context context, String notifyServiceUUID,
                                          String notifyCharacteristicUUID, String writeServiceUUID,
                                          String writeCharacteristicUUID, byte[] bytes, boolean segmentation,
@@ -155,12 +202,12 @@ public class BleUtil {
      * @param writeCharacteristicUUID  写入特征UUID
      * @param bytes                    命令内容
      * @param segmentation             是否分包发送，true  以最多20个字节会包发送
-     * @param immediately             是否立即执行，默认false
+     * @param immediately              是否立即执行，默认false
      */
     private static void writeBle(Context context, String notifyServiceUUID,
-                                         String notifyCharacteristicUUID, String writeServiceUUID,
-                                         String writeCharacteristicUUID, byte[] bytes, boolean segmentation,
-                                         boolean immediately) {
+                                 String notifyCharacteristicUUID, String writeServiceUUID,
+                                 String writeCharacteristicUUID, byte[] bytes, boolean segmentation,
+                                 boolean immediately) {
         if (getConnectStatus(context) != CONNECT_STATUS_SUCCESS) {
             return;
         }
@@ -197,7 +244,6 @@ public class BleUtil {
 
     /**
      * 判断连接是否可用
-     *
      * @return
      */
     public static boolean bleIsEnabled() {
@@ -209,7 +255,7 @@ public class BleUtil {
     }
 
     /**
-     * 验证或开始蓝牙
+     * 验证或开启蓝牙
      *
      * @param activity
      * @param resultCode
@@ -238,6 +284,11 @@ public class BleUtil {
         startScan(context, null);
     }
 
+    /**
+     * 开始扫描设备
+     * @param context
+     * @param scanFilterName 过滤名称
+     */
     public static void startScan(final Context context, final String[] scanFilterName) {
         if (!ToolUtil.isServiceRunning(WalleBleService.class.getName(), context)) {
             Intent intent = new Intent(context, WalleBleService.class);
@@ -252,7 +303,7 @@ public class BleUtil {
                         LogUtil.e("BleUtil", e.getMessage());
                     }
                     Intent intent = new Intent(WalleBleService.ACTION_START_SCAN);
-                    if(scanFilterName != null) {
+                    if (scanFilterName != null) {
                         intent.putExtra("scanFilterName", scanFilterName);
                     }
                     context.sendBroadcast(intent);
@@ -260,7 +311,7 @@ public class BleUtil {
             }.start();
         } else {
             Intent intent = new Intent(WalleBleService.ACTION_START_SCAN);
-            if(scanFilterName != null) {
+            if (scanFilterName != null) {
                 intent.putExtra("scanFilterName", scanFilterName);
             }
             context.sendBroadcast(intent);
@@ -269,7 +320,6 @@ public class BleUtil {
 
     /**
      * 停止扫描设备
-     *
      * @param context
      */
     public static void stopScan(Context context) {
@@ -277,13 +327,17 @@ public class BleUtil {
         context.sendBroadcast(intent);
     }
 
+    /**
+     * 关闭蓝牙连接服务
+     * @param context
+     */
     public static void stopWalleBleService(Context context) {
         Intent intent = new Intent(context, WalleBleService.class);
         context.stopService(intent);
     }
 
     /**
-     * 成功返回结果，立即执行下一个命令。如不主执行该方法则只能等待超时后执行下一个命令
+     * 命令有队列机制，成功返回结果后调用该方法可立即执行下一条命令。如不调用该方法则只能等待超时后执行自动执行下一个命令
      * @param context
      */
     public static void finishResult(Context context) {

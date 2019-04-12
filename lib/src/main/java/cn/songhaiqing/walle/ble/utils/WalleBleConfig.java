@@ -9,6 +9,8 @@ public class WalleBleConfig {
     private static int bleWriteDelayedTime = 500;
     private static int retrySleepTime = 1000;
     private static int maxRetryNumber = 3;
+    private static int reconnectTime = 10000; // 重连时间（毫秒）
+    private static int maxReconnectNumber = 3; // 重连次数
     private static int scanBleTimeoutTime = 20000;
     private static int bleResultWaitTime = 2000;
 
@@ -89,9 +91,35 @@ public class WalleBleConfig {
 
     /**
      * 设置命令发送后返回结果等待时间，默认2000毫秒，超过这个时间无返回数据则开始发送一下个命令
+     *
      * @param bleResultWaitTime
      */
     public static void setBleResultWaitTime(int bleResultWaitTime) {
         WalleBleConfig.bleResultWaitTime = bleResultWaitTime;
+    }
+
+    public static int getReconnectTime() {
+        return reconnectTime;
+    }
+
+    /**
+     * 重连时间间隔
+     * @param reconnectTime （默认10000）毫秒
+     */
+    public static void setReconnectTime(int reconnectTime) {
+        WalleBleConfig.reconnectTime = reconnectTime;
+    }
+
+    public static int getMaxReconnectNumber() {
+        return maxReconnectNumber;
+    }
+
+
+    /**
+     * 配置重连次数
+     * @param maxReconnectNumber 默认3次
+     */
+    public static void setMaxReconnectNumber(int maxReconnectNumber) {
+        WalleBleConfig.maxReconnectNumber = maxReconnectNumber;
     }
 }

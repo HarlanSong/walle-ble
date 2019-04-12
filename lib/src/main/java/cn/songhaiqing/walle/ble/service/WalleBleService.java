@@ -90,7 +90,6 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
     private boolean artificialDisconnect = true;
     // 是否是连接扫描，如果是连接扫描则扫与连接MAC地址相同的结果就停止扫描
     private boolean isConnectScan;
-    private final int maxReconnectionNumber = 3;
     private int reconnectionNumber = 0;
     private final int maxLength = 20;
     private long connectTimeTag;
@@ -99,6 +98,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
 
     private BleMessageQueue bleMessageQueue;
     private BleScanCall bleScanCall;
+    private boolean autoConnect = false;
 
     @Override
     public void onCreate() {
@@ -133,7 +133,8 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
                 String address = intent.getStringExtra(EXTRA_DATA);
                 reconnectionNumber = 0;
                 connectTimeTag = System.currentTimeMillis();
-                connect(address);
+                autoConnect = intent.getBooleanExtra("autoConnect", false);
+                connect(address, autoConnect);
             } else if (ACTION_READ_BLE.equals(action)) {
                 String serviceUUID = intent.getStringExtra(EXTRA_DATA_READ_SERVICE_UUID);
                 String characteristicUUID = intent.getStringExtra(EXTRA_DATA_READ_CHARACTERISTIC_UUID);
@@ -194,7 +195,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             LogUtil.d(TAG, "onServicesDiscovered status:" + status);
-            if(status == BluetoothGatt.GATT_SUCCESS) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
                 sendBroadcast(new Intent(ACTION_SERVICES_DISCOVERED_DONE));
             }
         }
@@ -253,7 +254,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
         return true;
     }
 
-    private boolean connect(final String address) {
+    private boolean connect(final String address, boolean autoConnect) {
         mBluetoothDeviceAddress = address;
         if (!initialize() || TextUtils.isEmpty(address)) {
             BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_FAIL);
@@ -276,7 +277,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
             LogUtil.w(TAG, "Device not found.  Unable to connect.");
             return false;
         }
-        mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
+        mBluetoothGatt = device.connectGatt(this, autoConnect, mGattCallback);
         mConnectionState = STATE_CONNECTING;
         checkConnectStatus();
         return true;
@@ -296,7 +297,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
                 if (artificialDisconnect) {
                     return;
                 }
-                if (!isConnected() && !TextUtils.isEmpty(mBluetoothDeviceAddress) && reconnectionNumber < maxReconnectionNumber) {
+                if (!isConnected() && !TextUtils.isEmpty(mBluetoothDeviceAddress) && reconnectionNumber < WalleBleConfig.getMaxReconnectNumber()) {
                     disconnect();
                     close();
                     reconnectionNumber++;
@@ -304,7 +305,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
                     Intent intent = new Intent(ACTION_RECONNECTION);
                     intent.putExtra("reconnectionNumber", reconnectionNumber);
                     sendBroadcast(intent);
-                    connect(mBluetoothDeviceAddress);
+                    connect(mBluetoothDeviceAddress, autoConnect);
                 } else if (BleUtil.getConnectStatus(getBaseContext()) != BleUtil.CONNECT_STATUS_SUCCESS) {
                     BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_FAIL);
                     LogUtil.w(TAG, "连接失败");
@@ -314,7 +315,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
         };
 
         reconnectTimer = new Timer();
-        reconnectTimer.schedule(reconnectTimerTask, 10000);
+        reconnectTimer.schedule(reconnectTimerTask, WalleBleConfig.getReconnectTime());
     }
 
     /**
@@ -612,15 +613,15 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
             if (name == null || name.isEmpty()) {
                 return;
             }
-            if(scanFilterName != null){
+            if (scanFilterName != null) {
                 boolean exist = false;
                 for (String nameTag : scanFilterName) {
-                    if(name.contains(nameTag)){
+                    if (name.contains(nameTag)) {
                         exist = true;
                         break;
                     }
                 }
-                if(!exist){
+                if (!exist) {
                     return;
                 }
             }
@@ -667,7 +668,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
         LogUtil.d(TAG, "onDestroy");
         if (bleMessageQueue != null) {
             bleMessageQueue.clear();
-            bleMessageQueue =  null;
+            bleMessageQueue = null;
         }
         super.onDestroy();
     }
@@ -676,27 +677,25 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            switch (intent.getAction()) {
-                case BluetoothAdapter.ACTION_STATE_CHANGED:
-                    int blueState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0);
-                    LogUtil.d(TAG, "blueState:" + blueState);
-                    switch (blueState) {
-                        case BluetoothAdapter.STATE_TURNING_ON:
-                            break;
-                        case BluetoothAdapter.STATE_ON:
-                            if (!TextUtils.isEmpty(mBluetoothDeviceAddress)) {
-                                startScan(true);
-                                connect(mBluetoothDeviceAddress);
-                            } else if (!isConnectScan) {
-                                startScan(isConnectScan);
-                            }
-                            break;
-                        case BluetoothAdapter.STATE_TURNING_OFF:
-                            break;
-                        case BluetoothAdapter.STATE_OFF:
-                            break;
-                    }
-                    break;
+            if(BluetoothAdapter.ACTION_STATE_CHANGED.equals(intent.getAction())){
+                int blueState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0);
+                LogUtil.d(TAG, "blueState:" + blueState);
+                switch (blueState) {
+                    case BluetoothAdapter.STATE_TURNING_ON:
+                        break;
+                    case BluetoothAdapter.STATE_ON:
+                        if (!TextUtils.isEmpty(mBluetoothDeviceAddress)) {
+                            startScan(true);
+                            connect(mBluetoothDeviceAddress, autoConnect);
+                        } else if (!isConnectScan) {
+                            startScan(isConnectScan);
+                        }
+                        break;
+                    case BluetoothAdapter.STATE_TURNING_OFF:
+                        break;
+                    case BluetoothAdapter.STATE_OFF:
+                        break;
+                }
             }
         }
     };
