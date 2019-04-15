@@ -86,6 +86,8 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
     private Timer reconnectTimer;
     private TimerTask reconnectTimerTask;
 
+    private Timer autoConnectTimer;
+
     private boolean operationDone = true;
     private boolean artificialDisconnect = true;
     // 是否是连接扫描，如果是连接扫描则扫与连接MAC地址相同的结果就停止扫描
@@ -129,12 +131,19 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
             LogUtil.d(TAG, "BroadcastReceiver Action:" + action);
             if (ACTION_DISCONNECT_DEVICE.equals(action)) {
                 disconnect();
+                autoConnect = false;
+                if(autoConnectTimer != null){
+                    cancelAutoConnect();
+                }
             } else if (ACTION_CONNECT_DEVICE.equals(action)) {
                 String address = intent.getStringExtra(EXTRA_DATA);
                 reconnectionNumber = 0;
                 connectTimeTag = System.currentTimeMillis();
                 autoConnect = intent.getBooleanExtra("autoConnect", false);
-                connect(address, autoConnect);
+                if(autoConnectTimer != null){
+                    cancelAutoConnect();
+                }
+                connect(address);
             } else if (ACTION_READ_BLE.equals(action)) {
                 String serviceUUID = intent.getStringExtra(EXTRA_DATA_READ_SERVICE_UUID);
                 String characteristicUUID = intent.getStringExtra(EXTRA_DATA_READ_CHARACTERISTIC_UUID);
@@ -168,6 +177,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
             LogUtil.d(TAG, "onConnectionStateChange status:" + status + " newState:" + newState);
             String intentAction;
             if (newState == BluetoothProfile.STATE_CONNECTED) {
+                cancelAutoConnect();
                 mBluetoothGatt.discoverServices();
                 intentAction = ACTION_CONNECTED_SUCCESS;
                 mConnectionState = STATE_CONNECTED;
@@ -189,6 +199,9 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
                 LogUtil.i(TAG, "设备已断开连接");
                 broadcastUpdate(intentAction);
                 bleMessageQueue.clear();
+                if (autoConnect) {
+                    startAutoConnect();
+                }
             }
         }
 
@@ -254,7 +267,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
         return true;
     }
 
-    private boolean connect(final String address, boolean autoConnect) {
+    private boolean connect(final String address) {
         mBluetoothDeviceAddress = address;
         if (!initialize() || TextUtils.isEmpty(address)) {
             BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_FAIL);
@@ -277,7 +290,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
             LogUtil.w(TAG, "Device not found.  Unable to connect.");
             return false;
         }
-        mBluetoothGatt = device.connectGatt(this, autoConnect, mGattCallback);
+        mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
         mConnectionState = STATE_CONNECTING;
         checkConnectStatus();
         return true;
@@ -305,7 +318,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
                     Intent intent = new Intent(ACTION_RECONNECTION);
                     intent.putExtra("reconnectionNumber", reconnectionNumber);
                     sendBroadcast(intent);
-                    connect(mBluetoothDeviceAddress, autoConnect);
+                    connect(mBluetoothDeviceAddress);
                 } else if (BleUtil.getConnectStatus(getBaseContext()) != BleUtil.CONNECT_STATUS_SUCCESS) {
                     BleUtil.setConnectStatus(BleUtil.CONNECT_STATUS_FAIL);
                     LogUtil.w(TAG, "连接失败");
@@ -677,7 +690,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
 
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(BluetoothAdapter.ACTION_STATE_CHANGED.equals(intent.getAction())){
+            if (BluetoothAdapter.ACTION_STATE_CHANGED.equals(intent.getAction())) {
                 int blueState = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, 0);
                 LogUtil.d(TAG, "blueState:" + blueState);
                 switch (blueState) {
@@ -686,7 +699,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
                     case BluetoothAdapter.STATE_ON:
                         if (!TextUtils.isEmpty(mBluetoothDeviceAddress)) {
                             startScan(true);
-                            connect(mBluetoothDeviceAddress, autoConnect);
+                            connect(mBluetoothDeviceAddress);
                         } else if (!isConnectScan) {
                             startScan(isConnectScan);
                         }
@@ -710,4 +723,34 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
                                   String writeCharacteristicUUID, byte[] content, boolean segmentationContent) {
         writeBluetooth(notifyServiceUUID, notifyCharacteristicUUID, writeServiceUUID, writeCharacteristicUUID, content, segmentationContent);
     }
+
+    /**
+     * 开始自动重连
+     */
+    private void startAutoConnect() {
+        if (TextUtils.isEmpty(mBluetoothDeviceAddress)) {
+            return;
+        }
+        LogUtil.d(TAG, "开始自动重连定时任务");
+        autoConnectTimer = new Timer();
+        autoConnectTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                LogUtil.d(TAG, "开始重连");
+                connect(mBluetoothDeviceAddress);
+            }
+        }, WalleBleConfig.getAutConnectTime(), WalleBleConfig.getAutConnectTime());
+    }
+
+    /**
+     * 取消自动重连
+     */
+    private void cancelAutoConnect() {
+        if (autoConnectTimer != null) {
+            autoConnectTimer.cancel();
+        }
+        autoConnectTimer = null;
+        LogUtil.d(TAG, "已取消自动重连定时任务");
+    }
+
 }

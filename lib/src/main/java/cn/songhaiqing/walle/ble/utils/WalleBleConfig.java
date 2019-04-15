@@ -13,6 +13,7 @@ public class WalleBleConfig {
     private static int maxReconnectNumber = 3; // 重连次数
     private static int scanBleTimeoutTime = 20000;
     private static int bleResultWaitTime = 2000;
+    private static int autConnectTime = 30000; // 自动重连时间
 
 
     public static void setLogTag(String tag) {
@@ -121,5 +122,13 @@ public class WalleBleConfig {
      */
     public static void setMaxReconnectNumber(int maxReconnectNumber) {
         WalleBleConfig.maxReconnectNumber = maxReconnectNumber;
+    }
+
+    public static int getAutConnectTime() {
+        return autConnectTime;
+    }
+
+    public static void setAutConnectTime(int autConnectTime) {
+        WalleBleConfig.autConnectTime = autConnectTime;
     }
 }
