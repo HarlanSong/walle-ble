@@ -187,7 +187,8 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
                 LogUtil.i(TAG, "设备已断开连接");
                 broadcastUpdate(intentAction);
                 bleMessageQueue.clear();
-                if(mBluetoothGatt != null){
+                notifyBluetoothGattCharacteristic = null;
+                if (mBluetoothGatt != null) {
                     mBluetoothGatt.connect();
                 }
             }
