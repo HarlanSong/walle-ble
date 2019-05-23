@@ -1,0 +1,9 @@
+<resources>
+    <string name="walle_ble_ble_not_supported">ブルートゥースに対応しない</string>
+    <string name="walle_ble_need_location">位置権限を要求する必要がある</string>
+    <string name="walle_ble_location_warn">位置情報を取得することを許可するように要求するが、そうでない場合は機能しない。</string>
+    <string name="walle_ble_unknown_device">未知の機器</string>
+    <string name="walle_ble_scan">筆描</string>
+    <string name="walle_ble_bind_device">機器を設定する</string>
+    <string name="walle_ble_stop">停止</string>
+</resources>

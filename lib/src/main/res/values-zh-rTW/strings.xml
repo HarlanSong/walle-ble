@@ -1,0 +1,9 @@
+<resources>
+    <string name="walle_ble_ble_not_supported">不支持藍牙</string>
+    <string name="walle_ble_need_location">需要請求位置權限</string>
+    <string name="walle_ble_location_warn">請允許獲取位置信息，否則壹些功能將無法正常工作。</string>
+    <string name="walle_ble_unknown_device">未知設備</string>
+    <string name="walle_ble_scan">掃描</string>
+    <string name="walle_ble_bind_device">綁定設備</string>
+    <string name="walle_ble_stop">停止</string>
+</resources>
