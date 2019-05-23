@@ -5,5 +5,5 @@
     <string name="walle_ble_unknown_device">未知の機器</string>
     <string name="walle_ble_scan">筆描</string>
     <string name="walle_ble_bind_device">機器を設定する</string>
-    <string name="walle_ble_stop">停止</string>
+    <string name="walle_ble_stop">やめる</string>
 </resources>
