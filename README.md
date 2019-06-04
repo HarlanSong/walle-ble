@@ -46,11 +46,11 @@ intent.putExtra("showSignalStrength", false);
 intent.putExtra("scanFilterName", scanFilterName);
 startActivityForResult(intent, REQUEST_BIND_DEVICE);
 ```
-* REQUEST_BIND_DEVICE 自定义回调常量（int）*
-* scanFilterName 名称过滤
-* showSignalStrength 是否显示信号强度值
+* REQUEST_BIND_DEVICE Custom callback constants（int）*
+* scanFilterName Filter Name
+* showSignalStrength Whether to display signal strength value
 
-### 选择蓝牙设置成功回调,并连接设备
+### Device selection successful
 
 ```java
 @Override
@@ -64,7 +64,6 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 	}
 }
 ```
-
 
 
 ### Custom scan page.
@@ -108,13 +107,13 @@ BroadcastReceiver scanResultBroadcastReceiver = new BroadcastReceiver() {
 
 
 
-### 断开连接
+### Disconnect
 
 ```java
 BleUtil.disConnect(this);
 ```
 
-### 监听设备连接状态
+### Listen for device connection status
 
 ```java
  private BroadcastReceiver bleReceiver = new BroadcastReceiver() {
@@ -134,112 +133,100 @@ BleUtil.disConnect(this);
     };
 ```
 
-* ACTION_CONNECTED_SUCCESS 连接成功
-* ACTION_GATT_DISCONNECTED 断开连接
-* ACTION_DEVICE_RESULT 设备有数据返回，`uuid`为返回特征值UUID;`data`为解析后的数组。`srcData`为原数据；
+* ACTION_CONNECTED_SUCCESS Connection successful
+* ACTION_GATT_DISCONNECTED Disconnected
+* ACTION_DEVICE_RESULT The device has data to return, 'uuid' is the return characteristic value uuid; 'data' is the parsed array. 'srcData' is the original data;
 
-### 写入命令
+### Write the content
 
 ```java
   BleUtil.broadcastWriteBle(Context context, String notifyServiceUUID,
                                          String notifyCharacteristicUUID, String writeServiceUUID,
                                          String writeCharacteristicUUID, byte[] bytes);
 ```
-*  context 上下文
-*  notifyServiceUUID 通知服务UUID
-*  notifyCharacteristicUUID  通知特征值UUID
-*  writeServiceUUID 写入服务UUID
-*  writeCharacteristicUUID 写入特殊值UUID
-*  bytes 命令内容
 
-### 读取数据
+### Read the content
 
 ```java
 BleUtil.readBle(Context context, String serviceUUID, String characteristicUUID);
 ```
 
-*  context 上下文
-*  serviceUUID 服务UUID
-*  characteristicUUID  特征值UUID
-
-### 判断设备是否连接
+### Determine whether the device is connected
 ```java
-/**
-* 读取连接状态
-* 返回：BleUtil
-* CONNECT_STATUS_NOT_CONNECTED  未连接
-* CONNECT_STATUS_CONNECTING 连接中
-* CONNECT_STATUS_SUCCESS 连接成功
-* CONNECT_STATUS_FAIL 连接失败
-**/
-
 getConnectStatus(Context context)
+```
+**Result**
+* BleUtil.CONNECT_STATUS_NOT_CONNECTED    Not connected
+* BleUtil.CONNECT_STATUS_CONNECTING       Connecting
+* BleUtil.CONNECT_STATUS_SUCCESS          Connected
+* BleUtil.CONNECT_STATUS_FAIL             Connection fail
 
-// 已连接设备MAC地址
+### MAC address of connected device
+```java
 BleUtil.bleAddress
+```
 
-// 已连接设备名称
-
+### Connected device name
+```JAVA
 BleUtil.bleName
 ```
 
-
-### BleUtil工具类
+### BleUtil Other Use
 
 ```java
 /**
-* 连接设备
+* Connecting device
 * @param context
-* @param address MAC地址
+* @param address MAC address
 */
 void connectDevice(Context context,String address)
 
 /**
-* 连接设备
+* Connecting device
 * @param context
-* @param address MAC 地址
-* @param autoConnect 是否自动连接，默认为false
+* @param address MAC address
+* @param autoConnect Auto connect(Default false)
 */
 void connectDevice(Context context, String address, boolean autoConnect)
 
 /**
-* 断开连接
+* Disconnect
 * @param context
 */
 void disConnect(Context context)
 
 /**
-* 读取蓝牙设备数据
+* Read content
 * @param context
-* @param serviceUUID 服务UUID
-* @param characteristicUUID 特征值UUID
+* @param serviceUUID
+* @param characteristicUUID
 */
 void readBle(Context context, String serviceUUID, String characteristicUUID)
 
 
 /**
-* 蓝牙设备写入命令
+* Write content
 * @param context
-* @param notifyServiceUUID 订阅服务UUID
-* @param notifyCharacteristicUUID 订阅特征值UUID
-* @param writeServiceUUID 写入服务UUID
-* @param writeCharacteristicUUID 写入特征值UUID
-* @param bytes 写入内容
+* @param notifyServiceUUID
+* @param notifyCharacteristicUUID
+* @param writeServiceUUID
+* @param writeCharacteristicUUID
+* @param bytes
 */
 void broadcastWriteBle(Context context, String notifyServiceUUID,
                                          String notifyCharacteristicUUID, String writeServiceUUID,
                                          String writeCharacteristicUUID, byte[] bytes) 
 
 /**
-* 蓝牙设备写入命令
+* Write content
 *
 * @param context
-* @param notifyServiceUUID        订阅服务UUID
-* @param notifyCharacteristicUUID 订阅特征UUID
-* @param writeServiceUUID         写入服务UUID
-* @param writeCharacteristicUUID  写入特征UUID
-* @param bytes                    命令内容
-* @param segmentation             是否分包发送，true  以最多20个字节会包发送
+* @param notifyServiceUUID
+* @param notifyCharacteristicUUID
+* @param writeServiceUUID
+* @param writeCharacteristicUUID
+* @param bytes                    Content
+* @param segmentation             Whether to subcontract the send,true will packet the send with up to 20 bytes
 */
 void broadcastWriteBle(Context context, String notifyServiceUUID,
                                          String notifyCharacteristicUUID, String writeServiceUUID,
@@ -247,16 +234,16 @@ void broadcastWriteBle(Context context, String notifyServiceUUID,
 
 
 /**
-* 蓝牙设备写入命令
+* Write content
 *
 * @param context
-* @param notifyServiceUUID        订阅服务UUID
-* @param notifyCharacteristicUUID 订阅特征UUID
-* @param writeServiceUUID         写入服务UUID
-* @param writeCharacteristicUUID  写入特征UUID
-* @param bytes                    命令内容
-* @param segmentation             是否分包发送，true  以最多20个字节会包发送
-* @param immediately              是否立即发送（因命令有队列机制，需要优选执行，如：测量终止测量手环心率等场景）
+* @param notifyServiceUUID
+* @param notifyCharacteristicUUID
+* @param writeServiceUUID
+* @param writeCharacteristicUUID
+* @param bytes
+* @param segmentation             Whether to subcontract the send,true will packet the send with up to 20 bytes
+* @param immediately              Whether to send it immediately or not (it needs to be optimized for the queue mechanism of the command, such as: measurement termination, measurement of the heart rate of the bracelet, etc.)
 */
 void broadcastWriteBle(Context context, String notifyServiceUUID,
                                          String notifyCharacteristicUUID, String writeServiceUUID,
@@ -264,108 +251,102 @@ void broadcastWriteBle(Context context, String notifyServiceUUID,
                                          boolean immediately) 
 
 /**
-* 判断连接是否可用
+* Whether bluetooth is available
 * @return
 */
 boolean bleIsEnabled()
 
 /**
-* 验证或开启蓝牙
+* Verify or enable bluetooth
 *
 * @param activity
-* @param resultCode 结果码
+* @param resultCode
 * @return
 */
 boolean validOrOpenBle(Activity activity, int resultCode)
 
  /**
-* 开始扫描设备
+* Start scan
 *
 * @param context
 */
 void startScan(final Context context)
 
 /**
-* 开始扫描设备
+* Start scan
 * @param context
-* @param scanFilterName 过滤名称
+* @param scanFilterName Filter name
 */
 void startScan(final Context context, final String[] scanFilterName)
 
  /**
-* 停止扫描设备
+* Stop scan
 * @param context
 */
 void stopScan(Context context) 
 
 /**
-* 关闭蓝牙连接服务
+*  Stop WalleBleService
 * @param context
 */
 void stopWalleBleService(Context context)
 
 /**
-* 命令有队列机制，成功返回结果后调用该方法可立即执行下一条命令。如不调用该方法则只能等待超时后执行自动执行下一个命令
+* The command has queue mechanism. After successfully returning the result, the method can be called to execute the next command immediately. If the method is not called, the next command can only be executed automatically after the timeout
 * @param context
 */
 void finishResult(Context context)
 ```
 
 
-### WalleBleConfig配置 
+### WalleBleConfig.java Config class 
 
 ```java
-/**
- * Log前缀
- * @param 默认: WalleBle 
- **/
-void setLogTag(String tag)
 
 /**
- * 是否开户DEBUG模式 
- *  @param isDebug 默认:false
+ * Open debug model
  **/
 void setDebug(boolean isDebug)
 
 /**
- * 命令发送失败重试次数
- * @param maxRetryNumber 默认:3
+ * Command send retries
+ * @param maxRetryNumber  Default 3
  **/ 
 void setMaxRetryNumber(int maxRetryNumber)
 
 /**
- * 分包时是否从第二个包开始在第0位添加序号，
- * @param segmentationAddIndex 默认:false
+ * Whether to add a sequence number at the 0th bit from the second package when subcontracting
+ * @param segmentationAddIndex Default false
  **/
 void setSegmentationAddIndex(boolean segmentationAddIndex)
 
 /**
- * 分包发送间隔时间
- * @param segmentationSleepTime  单位：毫秒
+ * Packet transmission interval
+ * @param segmentationSleepTime  millisecond(Default 500ms)
  **/ 
 void setSegmentationSleepTime(int segmentationSleepTime)
 
 /**
- * 设置扫描设备超时时间
- *  @param scanBleTimeoutTime 单位：毫秒， 默认20000
+ * Scan device timeout
+ *  @param scanBleTimeoutTime millisecond(Default 20000ms)
  **/ 
 void setScanBleTimeoutTime(int scanBleTimeoutTime)
 
 /**
- * 设置命令发送后返回结果等待时间，默认2000毫秒，超过这个时间无返回数据则开始发送一下个命令
- *  @param bleResultWaitTime 单位：毫秒
+ * Set the wait time after the command is sent to return the result. The default time is 2000 milliseconds
+ *  @param bleResultWaitTime millisecond
  **/
 void setBleResultWaitTime(int bleResultWaitTime)
 
 /**
- * 重连时间间隔
- * @param reconnectTime （默认10000）毫秒
+ * Reconnection interval
+ * @param reconnectTime millisecond(Default 10000ms)
  */
 void setReconnectTime(int reconnectTime)
 
  /**
-  * 配置重连次数
-  * @param maxReconnectNumber 默认3次
+  * Reconnection number
+  * @param maxReconnectNumber  default 3
   */
 void setMaxReconnectNumber(int maxReconnectNumber)
 ```

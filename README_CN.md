@@ -65,8 +65,6 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 }
 ```
 
-
-
 ### 自定义扫描界面
 
 **开始扫描**
@@ -105,8 +103,6 @@ BroadcastReceiver scanResultBroadcastReceiver = new BroadcastReceiver() {
     }
 };
 ```
-
-
 
 ### 断开连接
 
@@ -162,29 +158,27 @@ BleUtil.readBle(Context context, String serviceUUID, String characteristicUUID);
 *  serviceUUID 服务UUID
 *  characteristicUUID  特征值UUID
 
-### 判断设备是否连接
+### 获取连接状态
 ```java
-/**
-* 读取连接状态
-* 返回：BleUtil
+getConnectStatus(Context context)
+```
+
 * CONNECT_STATUS_NOT_CONNECTED  未连接
 * CONNECT_STATUS_CONNECTING 连接中
 * CONNECT_STATUS_SUCCESS 连接成功
 * CONNECT_STATUS_FAIL 连接失败
-**/
 
-getConnectStatus(Context context)
-
-// 已连接设备MAC地址
+### 已连接设备MAC地址
+```java
 BleUtil.bleAddress
+```
 
-// 已连接设备名称
-
+### 已连接设备名称
+```java
 BleUtil.bleName
 ```
 
-
-### BleUtil工具类
+### BleUtil.java 工具类的其他操作
 
 ```java
 /**
@@ -346,7 +340,7 @@ void setSegmentationAddIndex(boolean segmentationAddIndex)
 void setSegmentationSleepTime(int segmentationSleepTime)
 
 /**
- * 设置扫描设备超时时间
+ * 扫描设备超时时间
  *  @param scanBleTimeoutTime 单位：毫秒， 默认20000
  **/ 
 void setScanBleTimeoutTime(int scanBleTimeoutTime)
@@ -358,13 +352,13 @@ void setScanBleTimeoutTime(int scanBleTimeoutTime)
 void setBleResultWaitTime(int bleResultWaitTime)
 
 /**
- * 重连时间间隔
+ * 时间间隔
  * @param reconnectTime （默认10000）毫秒
  */
 void setReconnectTime(int reconnectTime)
 
  /**
-  * 配置重连次数
+  * 重连次数
   * @param maxReconnectNumber 默认3次
   */
 void setMaxReconnectNumber(int maxReconnectNumber)
