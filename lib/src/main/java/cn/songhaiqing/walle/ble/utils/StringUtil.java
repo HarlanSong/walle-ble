@@ -50,4 +50,17 @@ public class StringUtil {
         }
         return bytes;
     }
+
+    public static List<String> bytesToStringArrayList(byte[] bytes) {
+        List<String> datas = new ArrayList<>();
+        for (int i = 0; i < bytes.length; i++) {
+            datas.add(String.format("%02X", bytes[i]));
+        }
+        return datas;
+    }
+
+    public static String fillZero(int sourceDate, int formatLength) {
+        String newString = String.format("%0" + formatLength + "d", sourceDate);
+        return newString;
+    }
 }
