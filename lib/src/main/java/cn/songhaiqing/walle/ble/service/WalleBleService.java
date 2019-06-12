@@ -98,6 +98,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
 
     private BleMessageQueue bleMessageQueue;
     private BleScanCall bleScanCall;
+    private boolean autoConnect = false;
 
     @Override
     public void onCreate() {
@@ -119,6 +120,18 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
         timer = new Timer();
         deviceMap = new HashMap<>();
         bleMessageQueue = new BleMessageQueue(this);
+
+
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        String macAddress = intent.getStringExtra("macAddress");
+        if(!TextUtils.isEmpty(macAddress)){
+            connect(macAddress);
+            autoConnect = intent.getBooleanExtra("autoConnect",false);
+        }
+        return super.onStartCommand(intent, flags, startId);
     }
 
     BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
@@ -132,6 +145,7 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
                 String address = intent.getStringExtra(EXTRA_DATA);
                 reconnectionNumber = 0;
                 connectTimeTag = System.currentTimeMillis();
+                autoConnect = intent.getBooleanExtra("autoConnect", false);
                 connect(address);
             } else if (ACTION_READ_BLE.equals(action)) {
                 String serviceUUID = intent.getStringExtra(EXTRA_DATA_READ_SERVICE_UUID);
@@ -596,13 +610,10 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
     }
 
     private void stopScan() {
-        if (bluetoothLeScanner == null || bleScanCall == null) {
+        if(bluetoothLeScanner != null){
+            bluetoothLeScanner.stopScan(bleScanCall);
             bluetoothLeScanner = null;
-            bleScanCall = null;
-            return;
         }
-        bluetoothLeScanner.stopScan(bleScanCall);
-        bleScanCall = null;
     }
 
     class BleScanCall extends ScanCallback {

@@ -17,33 +17,6 @@ public class BleUtil {
     public static String bleAddress;
     public static String bleName;
 
-    @Deprecated
-    public static boolean connectDevice(final Context context, String name, final String address) {
-        setConnectStatus(CONNECT_STATUS_CONNECTING);
-        if (!ToolUtil.isServiceRunning(WalleBleService.class.getName(), context)) {
-            Intent intent = new Intent(context, WalleBleService.class);
-            context.startService(intent);
-            new Thread() {
-                @Override
-                public void run() {
-                    super.run();
-                    try {
-                        sleep(100);
-                    } catch (InterruptedException e) {
-                        LogUtil.e("BleUtil", e.getMessage());
-                    }
-                    Intent intent = new Intent(WalleBleService.ACTION_CONNECT_DEVICE);
-                    intent.putExtra(WalleBleService.EXTRA_DATA, address);
-                    context.sendBroadcast(intent);
-                }
-            }.start();
-        } else {
-            Intent intent = new Intent(WalleBleService.ACTION_CONNECT_DEVICE);
-            intent.putExtra(WalleBleService.EXTRA_DATA, address);
-            context.sendBroadcast(intent);
-        }
-        return true;
-    }
 
     /**
      * 连接设备
@@ -63,25 +36,15 @@ public class BleUtil {
      * @param autoConnect 是否自动连接，默认为false
      */
     public static void connectDevice(final Context context, final String address, final boolean autoConnect) {
-        setConnectStatus(CONNECT_STATUS_CONNECTING);
+        if(connectStatus == CONNECT_STATUS_CONNECTING && ToolUtil.isServiceRunning(WalleBleService.class.getName(), context)) {
+            return;
+        }
+        connectStatus = CONNECT_STATUS_CONNECTING;
         if (!ToolUtil.isServiceRunning(WalleBleService.class.getName(), context)) {
             Intent intent = new Intent(context, WalleBleService.class);
+            intent.putExtra("macAddress", address);
+            intent.putExtra("autoConnect", autoConnect);
             context.startService(intent);
-            new Thread() {
-                @Override
-                public void run() {
-                    super.run();
-                    try {
-                        sleep(100);
-                    } catch (InterruptedException e) {
-                        LogUtil.e("BleUtil", e.getMessage());
-                    }
-                    Intent intent = new Intent(WalleBleService.ACTION_CONNECT_DEVICE);
-                    intent.putExtra(WalleBleService.EXTRA_DATA, address);
-                    intent.putExtra("autoConnect", autoConnect);
-                    context.sendBroadcast(intent);
-                }
-            }.start();
         } else {
             Intent intent = new Intent(WalleBleService.ACTION_CONNECT_DEVICE);
             intent.putExtra(WalleBleService.EXTRA_DATA, address);
@@ -100,6 +63,7 @@ public class BleUtil {
         context.sendBroadcast(new Intent(WalleBleService.ACTION_DISCONNECT_DEVICE));
         Intent intent = new Intent(context, WalleBleService.class);
         context.stopService(intent);
+        connectStatus = CONNECT_STATUS_NOT_CONNECTED;
     }
 
     @Deprecated

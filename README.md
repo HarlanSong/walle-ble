@@ -73,7 +73,7 @@ protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 BleUtil.startScan(final Context context)
 ```
 
-*Stop scan **
+**Stop scan**
 ```java
 BleUtil.stopScan(Context context)
 ```
