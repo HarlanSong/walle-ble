@@ -594,6 +594,9 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
             LogUtil.w(TAG, "bluetoothLeScanner is null");
             return;
         }
+        if(bleScanCall != null){
+            return;
+        }
         bleScanCall = new BleScanCall();
         deviceMap.clear();
         ScanSettings.Builder builder = new ScanSettings.Builder();
@@ -612,8 +615,8 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
     private void stopScan() {
         if(bluetoothLeScanner != null){
             bluetoothLeScanner.stopScan(bleScanCall);
-            bluetoothLeScanner = null;
         }
+        bleScanCall = null;
     }
 
     class BleScanCall extends ScanCallback {

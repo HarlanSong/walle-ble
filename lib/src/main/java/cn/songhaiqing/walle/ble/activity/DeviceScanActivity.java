@@ -51,12 +51,9 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
     private boolean showSignalStrength; // 信号强度
     private String[] scanFilterName ;
 
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             Window window = getWindow();
             window.setFlags(
@@ -131,6 +128,8 @@ public class DeviceScanActivity extends Activity implements AdapterView.OnItemCl
         if (requestCode == PERMISSION_REQUEST_COARSE_LOCATION && grantResults.length > 0) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 BleUtil.startScan(this, scanFilterName);
+                mScanning = true;
+                refreshOptionStatus();
             } else {
                 finish();
             }

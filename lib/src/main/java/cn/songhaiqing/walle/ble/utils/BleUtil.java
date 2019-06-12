@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Context;
 import android.content.Intent;
-
 import cn.songhaiqing.walle.ble.service.WalleBleService;
 
 public class BleUtil {
@@ -16,7 +15,6 @@ public class BleUtil {
 
     public static String bleAddress;
     public static String bleName;
-
 
     /**
      * 连接设备
@@ -254,6 +252,7 @@ public class BleUtil {
      * @param scanFilterName 过滤名称
      */
     public static void startScan(final Context context, final String[] scanFilterName) {
+
         if (!ToolUtil.isServiceRunning(WalleBleService.class.getName(), context)) {
             Intent intent = new Intent(context, WalleBleService.class);
             context.startService(intent);
