@@ -55,12 +55,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         btnScan.setOnClickListener(this);
 
         WalleBleConfig.setDebug(true);
-        autoConnection();
+        //autoConnection();
 
         loadStatusInfo();
 
-       // CareeachNB202Parse careeachNB202Parse = new CareeachNB202Parse(careeachResult);
-        //careeachNB202Parse.parse();
     }
 
     private CareeachNB202Parse.CareeachResult  careeachResult = new CareeachNB202Parse.CareeachResult() {
@@ -120,13 +118,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tvInfo.setText(info);
     }
 
-    private void autoConnection() {
+   /* private void autoConnection() {
         String address = "C8:41:A5:F6:E8:74";
         if (TextUtils.isEmpty(address)) {
             return;
         }
         BleUtil.connectDevice(this, address);
-    }
+    }*/
 
     private BroadcastReceiver bleReceiver = new BroadcastReceiver() {
         @Override

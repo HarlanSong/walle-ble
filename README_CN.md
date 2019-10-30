@@ -1,4 +1,4 @@
-[![](https://jitpack.io/v/HarlanSong/walle-ble.svg)](https://jitpack.io/#HarlanSong/walle-ble)
+[![](https://jitpack.io/v/com.gitee.HarlanSong/walle-ble.svg)](https://jitpack.io/#com.gitee.HarlanSong/walle-ble)
 
 * [English document](https://github.com/HarlanSong/walle-ble/blob/master/README.md)
 * walle-ble是安卓低功耗蓝牙工具
@@ -23,7 +23,7 @@ maven { url "https://jitpack.io" }
 
 **Gradle**
 ```groovy
-implementation 'com.github.HarlanSong:walle-ble:1.0.21'
+implementation 'com.gitee.HarlanSong:walle-ble:1.0.28'
 ```
 
 **添加权限**
