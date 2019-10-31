@@ -126,6 +126,9 @@ public class WalleBleService extends Service implements BleMessageQueue.BleExecu
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if(intent == null){
+            return super.onStartCommand(intent, flags, startId);
+        }
         String macAddress = intent.getStringExtra("macAddress");
         if (!TextUtils.isEmpty(macAddress)) {
             connect(macAddress);
